@@ -76,7 +76,7 @@ jobs:
           release/*.exe.sig
           release/latest*.yml
     - name: Copy files for FTP upload
-      if: github.event.inputs.test-build != 'yes'
+      if: inputs.release == 'true'
       shell: bash
       run: |
         mkdir -p release-ftp
@@ -84,7 +84,7 @@ jobs:
         cp release/*.exe.sig release-ftp
         cp release/latest*.yml release-ftp        
     - name: Deploy binaries
-      if: github.event.inputs.test-build != 'yes'
+      if: inputs.release == 'true'
       uses: dennisameling/ftp-upload-action@v1
       with:
         server: ${{ secrets.FTP_HOST }}

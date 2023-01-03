@@ -56,7 +56,7 @@ const overwritePackageJson = () => {
     parsedConfig.desktopName = 'signal.desktop.unofficial'
     
     parsedConfig.build.appId = 'com.dennisameling.signal-desktop'
-    parsedConfig.build.win.artifactName = '${name}-win-${version}.${ext}'
+    parsedConfig.build.win.artifactName = '${name}-win-${arch}-${version}.${ext}'
     parsedConfig.build.win.target = [
         {
             target: "nsis",
