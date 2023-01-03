@@ -1,0 +1,57 @@
+version: 2.1
+
+parameters:
+  ref_to_build:
+    type: string
+
+jobs:
+  build:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    steps:
+      - run: uname -a
+      - run: python --version
+      - run: git clone --depth 1 --branch << pipeline.parameters.ref_to_build >> https://github.com/signalapp/Signal-Desktop .
+      - run: git clone https://github.com/dennisameling/signal-desktop-automation ./tmp-automation-release-scripts
+      - run: sudo apt-get install xvfb git-lfs build-essential ruby
+      - run: git lfs install
+      - run: sudo gem install fpm
+      - run:
+          name: Install NodeJS + Yarn
+          command: |
+            nvm install
+            nvm use
+            nvm alias default
+            npm install -g yarn@1.22.10
+            export SIGNAL_DIR="$PWD"
+      - run:
+          command: node ./tmp-automation-release-scripts/patch-files.mjs
+          environment:
+            PUBLIC_KEY: $SIGN_RELEASE_PUBLIC_KEY
+            SIGNAL_DIR: $SIGNAL_DIR
+      - run: yarn install --frozen-lockfile
+      - run: yarn generate
+      - run: yarn prepare-beta-build
+      - run:
+          command: yarn build
+          environment:
+            DISABLE_INSPECT_FUSE: on
+            USE_SYTEM_FPM: true
+      - run: xvfb-run --auto-servernum yarn test-node
+      - run:
+          command: xvfb-run --auto-servernum yarn test-electron
+          environment:
+            LANG: en_US
+            LANGUAGE: en_US
+      - run:
+          command: xvfb-run --auto-servernum yarn test-release
+          environment:
+            NODE_ENV: production
+      - store_artifacts:
+          path: "${CIRCLE_WORKING_DIRECTORY}/release/signal-desktop-linux-*"
+
+workflows:
+  signal:
+    jobs:
+      - build
