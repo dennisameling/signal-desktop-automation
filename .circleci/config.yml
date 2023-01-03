@@ -3,6 +3,7 @@ version: 2.1
 parameters:
   ref_to_build:
     type: string
+    default: ""
 
 jobs:
   build:
