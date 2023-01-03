@@ -68,7 +68,7 @@ jobs:
         Remove-Item public.key
         Remove-Item private.key
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: signal-desktop-win-all
         path: |
