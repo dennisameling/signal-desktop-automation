@@ -50,7 +50,7 @@ jobs:
     # The script below ensures that we overwrite some defaults from the official Signal repo
     - name: Overwrite updates server, public key, etc.
       shell: bash
-      run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/automation-release-scripts/patch-files.mjs
+      run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
     - run: git diff
 
     - name: Install Desktop node_modules
