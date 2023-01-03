@@ -19,12 +19,17 @@ jobs:
       - run: git lfs install
       - run: sudo gem install fpm --force
       - run:
+          name: Prepare release signing
+          command: |
+            echo $SIGN_RELEASE_PUBLIC_KEY >> public.key
+            echo $SIGN_RELEASE_PRIVATE_KEY >> private.key
+      - run:
           name: Install NodeJS + Yarn
           command: |
             nvm install
             nvm use
-            nvm alias default
-            npm install -g yarn@1.22.10
+            nvm alias default $(nvm current)
+            npm install -g yarn
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - run: PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
       - run: yarn install --frozen-lockfile
