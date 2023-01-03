@@ -4,8 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       release:
-        description: 'Should this build be released? Set to "true" if that's the case'
-        required: false
+        type: choice
+        description: 'Should this build be released?'
+        options:
+        - true
+        - false
         default: 'false'
       ref_to_build:
         description: 'Ref to build (only tested by providing tags), e.g. v6.1.0'
@@ -113,12 +116,14 @@ jobs:
     - uses: ncipollo/release-action@v1
       id: release-url
       with:
+        owner: dennisameling
+        repo: Signal-Desktop
         body: |
           This is the v${{ env.SIGNAL_VERSION }} release. Existing users of Signal Unofficial will get an in-app update notification.
           Windows arm64:
           https://signal.dennisameling.com/dl/signal-desktop-unofficial-win-arm64-${{ env.SIGNAL_VERSION }}.exe
         name: v${{ env.SIGNAL_VERSION }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.DENNIS_PAT }}
 
   comment:
     needs: [release, windows]
