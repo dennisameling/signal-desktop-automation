@@ -15,7 +15,7 @@ jobs:
       - run: python --version
       - run: git clone --depth 1 --branch << pipeline.parameters.ref_to_build >> https://github.com/signalapp/Signal-Desktop .
       - run: git clone https://github.com/dennisameling/signal-desktop-automation ./tmp-automation-release-scripts
-      - run: sudo apt-get install xvfb git-lfs build-essential ruby
+      - run: sudo apt-get update && apt-get install xvfb git-lfs build-essential ruby
       - run: git lfs install
       - run: sudo gem install fpm
       - run:
