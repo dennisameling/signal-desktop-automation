@@ -8,7 +8,7 @@ parameters:
 jobs:
   build:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:2022.10.1
     resource_class: arm.medium
     steps:
       - run: uname -a
@@ -17,7 +17,7 @@ jobs:
       - run: git clone https://github.com/dennisameling/signal-desktop-automation ./tmp-automation-release-scripts
       - run: sudo apt-get update && sudo apt-get install xvfb git-lfs build-essential ruby
       - run: git lfs install
-      - run: sudo gem install fpm
+      - run: sudo gem install fpm --force
       - run:
           name: Install NodeJS + Yarn
           command: |
