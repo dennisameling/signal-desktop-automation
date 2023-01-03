@@ -26,19 +26,12 @@ jobs:
       - run:
           name: Install NodeJS + Yarn
           command: |
-            set +e
-            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
             nvm install
             nvm use
-            nvm alias default $(nvm current)
+            nvm alias default 16.16.0
             npm install --location=global yarn
-            echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
-            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
       # The script below ensures that we overwrite some defaults from the official Signal repo
-      - run: echo "hello" && echo node --version && PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
+      - run: PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
       - run: which node && which npm && yarn install --frozen-lockfile
       - run: yarn generate
       - run: yarn prepare-beta-build
