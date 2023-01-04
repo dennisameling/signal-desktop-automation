@@ -17,12 +17,10 @@ jobs:
       - run:
           name: Install NodeJS + Yarn
           command: |
-            nvm install
-            nvm use
-            NODE_VERSION=$(node -v)
-            nvm alias default ${NODE_VERSION//v}
-            npm install --location=global yarn
-            which yarn
+            nvm install 16.16.0
+            nvm alias default 16.16.0
+            nvm use 16.16.0
+            npm install -g yarn@1.22.10
       - run: sudo apt-get update && sudo apt-get install xvfb git-lfs build-essential ruby
       - run: git lfs install
       - run: sudo gem install fpm --force
