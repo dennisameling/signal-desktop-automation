@@ -35,10 +35,9 @@ jobs:
       - run: yarn generate
       - run: yarn prepare-beta-build
       - run:
-          command: yarn build
+          command: export USE_SYSTEM_FPM=true && yarn build
           environment:
             DISABLE_INSPECT_FUSE: on
-            USE_SYTEM_FPM: true
       - run: xvfb-run --auto-servernum yarn test-node
       - run:
           command: xvfb-run --auto-servernum yarn test-electron
