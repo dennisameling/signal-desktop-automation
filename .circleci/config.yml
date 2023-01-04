@@ -9,6 +9,7 @@ jobs:
   build:
     machine:
       # Fixed to this version due to issues with Git LFS
+      # https://discuss.circleci.com/t/git-lfs-broken-in-recent-ubuntu-20-04-machine-images-arm64/46473/1
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
     steps:
@@ -55,7 +56,7 @@ jobs:
             LANGUAGE: en_US
       - run:
           name: Copy release artifacts as store_artifacts doesn't support wildcards
-          command: mkdir -p release-binaries && cp release/signal-desktop-unofficial-* ./release-binaries
+          command: mkdir -p release-binaries && cp release/signal-desktop-unofficial* ./release-binaries
       - store_artifacts:
           path: "release-binaries"
 
