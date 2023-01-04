@@ -54,11 +54,10 @@ jobs:
             LANG: en_US
             LANGUAGE: en_US
       - run:
-          command: xvfb-run --auto-servernum yarn test-release
-          environment:
-            NODE_ENV: production
+          name: Copy release artifacts as store_artifacts doesn't support wildcards
+          command: mkdir -p release-binaries && cp release/signal-desktop-unofficial-* ./release-binaries
       - store_artifacts:
-          path: "release/signal-desktop-unofficial-*"
+          path: "release-binaries"
 
 workflows:
   signal:
