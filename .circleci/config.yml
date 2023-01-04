@@ -8,14 +8,14 @@ parameters:
 jobs:
   build:
     machine:
-      image: ubuntu-2004:2022.04.2
+      image: ubuntu-2004:202201-02
     resource_class: arm.medium
     steps:
       - run: uname -a
       - run: git clone --depth 1 --branch << pipeline.parameters.ref_to_build >> https://github.com/signalapp/Signal-Desktop .
       - run: git clone https://github.com/dennisameling/signal-desktop-automation ./tmp-automation-release-scripts
       - run:
-          name: Install NodeJS + Yarn
+          name: Install NodeJS
           command: |
             nvm install
             nvm use
