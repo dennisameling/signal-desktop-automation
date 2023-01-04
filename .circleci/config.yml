@@ -8,7 +8,7 @@ parameters:
 jobs:
   build:
     machine:
-      image: ubuntu-2004:2022.10.2
+      image: ubuntu-2004:2022.10.1
     resource_class: arm.medium
     steps:
       - run: git clone --depth 1 --branch << pipeline.parameters.ref_to_build >> https://github.com/signalapp/Signal-Desktop .
