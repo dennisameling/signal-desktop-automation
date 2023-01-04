@@ -12,7 +12,21 @@ jobs:
     resource_class: arm.medium
     steps:
       - run: uname -a
-      - run: python --version
+      - run:
+          name: Setup NVM
+          command: |
+            set +e
+            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+            echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
+            echo 'source "$NVM_DIR/nvm.sh"' >> $BASH_ENV
+      - run:
+          name: Install NodeJS + Yarn
+          command: |
+            nvm install
+            nvm use
+            NODE_VERSION=$(node -v)
+            nvm alias default ${NODE_VERSION//v}
+            npm install --location=global yarn
       - run: git clone --depth 1 --branch << pipeline.parameters.ref_to_build >> https://github.com/signalapp/Signal-Desktop .
       - run: git clone https://github.com/dennisameling/signal-desktop-automation ./tmp-automation-release-scripts
       - run: sudo apt-get update && sudo apt-get install xvfb git-lfs build-essential ruby
@@ -23,13 +37,6 @@ jobs:
           command: |
             echo $SIGN_RELEASE_PUBLIC_KEY >> public.key
             echo $SIGN_RELEASE_PRIVATE_KEY >> private.key
-      - run:
-          name: Install NodeJS + Yarn
-          command: |
-            nvm install
-            nvm use
-            nvm alias default 16.16.0
-            npm install --location=global yarn
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - run: PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
       - run: which node && which npm && yarn install --frozen-lockfile
