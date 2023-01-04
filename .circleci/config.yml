@@ -27,7 +27,7 @@ jobs:
           name: "Enforce nvm use default"
           command: |
             echo "nvm use default" >> $BASH_ENV
-      - run: sudo apt-get update && sudo apt-get install xvfb build-essential ruby git-lfs
+      - run: sudo apt-get update && sudo apt-get install xvfb libgbm-dev build-essential ruby git-lfs
       - run: git lfs install
       - run:
           name: Install FPM (for packaging)
@@ -58,7 +58,7 @@ jobs:
           environment:
             NODE_ENV: production
       - store_artifacts:
-          path: "${CIRCLE_WORKING_DIRECTORY}/release/signal-desktop-linux-*"
+          path: "${CIRCLE_WORKING_DIRECTORY}/release/signal-desktop-unofficial-*"
 
 workflows:
   signal:
