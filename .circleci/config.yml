@@ -8,9 +8,11 @@ parameters:
 jobs:
   build:
     machine:
-      image: ubuntu-2004:2022.10.1
+      # Fixed to this version due to issues with Git LFS
+      image: ubuntu-2004:202201-02
     resource_class: arm.medium
     steps:
+      - run: git lfs install
       - run: git clone --depth 1 --branch << pipeline.parameters.ref_to_build >> https://github.com/signalapp/Signal-Desktop .
       - run: git clone https://github.com/dennisameling/signal-desktop-automation ./tmp-automation-release-scripts
       - run:
@@ -38,7 +40,7 @@ jobs:
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - run: PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
       # We need git-lfs for the better-sqlite3 dependency
-      - run: which node && which npm && which yarn && which fpm && git lfs install && yarn install --frozen-lockfile
+      - run: which node && which npm && which yarn && which fpm && yarn install --frozen-lockfile
       - run: yarn generate
       - run: yarn prepare-beta-build
       - run:
