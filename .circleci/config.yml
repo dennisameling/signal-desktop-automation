@@ -21,11 +21,6 @@ jobs:
             nvm use
             nvm alias default $(nvm current)
             npm install --location=global yarn
-      - run:
-          # https://discuss.circleci.com/t/changed-behaviour-of-nvm-alias-after-migrating-to-new-machine-image/42965
-          name: "Enforce nvm use default"
-          command: |
-            echo "nvm use default" >> $BASH_ENV
       - run: sudo apt-get update && sudo apt-get install xvfb git-lfs build-essential ruby
       - run: git lfs install
       - run:
