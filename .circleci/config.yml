@@ -27,7 +27,6 @@ jobs:
           command: |
             echo "nvm use default" >> $BASH_ENV
       - run: sudo apt-get update && sudo apt-get install xvfb git-lfs build-essential ruby
-      - run: git lfs install
       - run:
           name: Install FPM (for packaging)
           command: gem install fpm
@@ -38,7 +37,8 @@ jobs:
             echo $SIGN_RELEASE_PRIVATE_KEY >> private.key
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - run: PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
-      - run: which node && which npm && which yarn && which fpm && yarn install --frozen-lockfile
+      # We need git-lfs for the better-sqlite3 dependency
+      - run: which node && which npm && which yarn && which fpm && git lfs install && yarn install --frozen-lockfile
       - run: yarn generate
       - run: yarn prepare-beta-build
       - run:
