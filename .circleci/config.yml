@@ -12,6 +12,8 @@ jobs:
     resource_class: arm.medium
     steps:
       - run: uname -a
+      - run: git clone --depth 1 --branch << pipeline.parameters.ref_to_build >> https://github.com/signalapp/Signal-Desktop .
+      - run: git clone https://github.com/dennisameling/signal-desktop-automation ./tmp-automation-release-scripts
       - run:
           name: Install NodeJS + Yarn
           command: |
@@ -21,8 +23,6 @@ jobs:
             nvm alias default ${NODE_VERSION//v}
             npm install --location=global yarn
             which yarn
-      - run: git clone --depth 1 --branch << pipeline.parameters.ref_to_build >> https://github.com/signalapp/Signal-Desktop .
-      - run: git clone https://github.com/dennisameling/signal-desktop-automation ./tmp-automation-release-scripts
       - run: sudo apt-get update && sudo apt-get install xvfb git-lfs build-essential ruby
       - run: git lfs install
       - run: sudo gem install fpm --force
