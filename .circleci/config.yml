@@ -28,7 +28,7 @@ jobs:
           name: "Enforce nvm use default"
           command: |
             echo "nvm use default" >> $BASH_ENV
-      - run: sudo apt-get update && sudo apt-get install xvfb git-lfs build-essential ruby
+      - run: sudo apt-get update && sudo apt-get install xvfb build-essential ruby
       - run:
           name: Install FPM (for packaging)
           command: gem install fpm
