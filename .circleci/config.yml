@@ -58,7 +58,7 @@ jobs:
           environment:
             NODE_ENV: production
       - store_artifacts:
-          path: "${CIRCLE_WORKING_DIRECTORY}/release/signal-desktop-unofficial-*"
+          path: "release/signal-desktop-unofficial-*"
 
 workflows:
   signal:
