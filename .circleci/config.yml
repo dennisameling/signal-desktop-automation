@@ -17,13 +17,15 @@ jobs:
       - run:
           name: Install NodeJS + Yarn
           command: |
-            nvm install 16.16.0
-            nvm alias default 16.16.0
-            nvm use 16.16.0
-            npm install -g yarn@1.22.10
+            nvm install
+            nvm use
+            nvm alias default $(nvm current)
+      - run: npm install --location=global yarn
       - run: sudo apt-get update && sudo apt-get install xvfb git-lfs build-essential ruby
       - run: git lfs install
-      - run: sudo gem install fpm --force
+      - run:
+          name: Install FPM (for packaging)
+          command: gem install fpm
       - run:
           name: Prepare release signing
           command: |
@@ -31,7 +33,7 @@ jobs:
             echo $SIGN_RELEASE_PRIVATE_KEY >> private.key
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - run: PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
-      - run: which node && which npm && which yarn && yarn install --frozen-lockfile
+      - run: which node && which npm && which yarn && which fpm && yarn install --frozen-lockfile
       - run: yarn generate
       - run: yarn prepare-beta-build
       - run:
