@@ -14,6 +14,9 @@ on:
         description: 'Ref to build (only tested by providing tags), e.g. v6.1.0'
         required: true
 
+env:
+  SIGNAL_TAG: ${{ inputs.ref_to_build }}
+
 jobs:
   windows:
     runs-on: windows-latest
@@ -31,6 +34,12 @@ jobs:
       with:
         repository: 'signalapp/signal-desktop'
         ref: ${{ inputs.ref_to_build }}
+        token: ${{ secrets.GH_SIGNAL_DESKTOP_TOKEN }}
+
+    - name: Create ${{ inputs.ref_to_build }} tag in dennisameling/Signal-Desktop
+      run: |
+        git remote add dennis https://github.com/dennisameling/Signal-Desktop
+        git push --force dennis $SIGNAL_TAG
 
     - uses: actions/checkout@v3
       with:
@@ -101,15 +110,12 @@ jobs:
       release_url: ${{ steps.release-url.outputs.html_url }}
       signal_version: ${{ steps.signal-version.outputs.version }}
 
-    steps:      
-
+    steps:
     # Turns v6.1.0 into 6.1.0
     - name: Get version from tag
       id: signal-version
       run: |
-        export SIGNAL_TAG=${{ inputs.ref_to_build }}
         SIGNAL_VERSION=${SIGNAL_TAG#"v"}
-        SIGNAL_VERSION=${SIGNAL_VERSION%"-multi-arch"}
         echo "SIGNAL_VERSION=${SIGNAL_VERSION}" >> $GITHUB_ENV
         echo "SIGNAL_TAG=${SIGNAL_TAG}" >> $GITHUB_ENV
         echo "::set-output name=version::${SIGNAL_VERSION}"
@@ -120,11 +126,36 @@ jobs:
         repo: Signal-Desktop
         body: |
           This is the v${{ env.SIGNAL_VERSION }} release. Existing users of Signal Unofficial will get an in-app update notification.
+
           Windows arm64:
           https://signal.dennisameling.com/dl/signal-desktop-unofficial-win-arm64-${{ env.SIGNAL_VERSION }}.exe
-        name: v${{ env.SIGNAL_VERSION }}
-        token: ${{ secrets.DENNIS_PAT }}
 
+          **Note:** this release also contains a `.deb` file for Linux users. Note that auto-updates are **not** supported on this platform.
+        name: v${{ env.SIGNAL_VERSION }}
+        token: ${{ secrets.GH_SIGNAL_DESKTOP_TOKEN }}
+    - uses: actions/github-script@v6
+      name: Trigger CircleCI build + publish
+      env:
+        CIRCLECI_API_TOKEN: ${{ secrets.CIRCLECI_API_TOKEN }}
+        GITHUB_RELEASE_UPLOAD_URL: ${{ steps.release-url.outputs.upload_url }}
+      with:
+        script: |
+          await fetch('https://circleci.com/api/v2/project/gh/dennisameling/signal-desktop-automation/pipeline', {
+            method: 'post',
+            body: JSON.stringify({
+              branch: 'main',
+              parameters: {
+                ref_to_build: process.env.SIGNAL_TAG,
+                github_actions_release_upload_url: process.env.GITHUB_RELEASE_UPLOAD_URL
+              }
+            }),
+            headers: {
+              'Circle-Token': process.env.CIRCLECI_API_TOKEN,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          console.log(`Successfully started CircleCI pipeline. It'll add the generated binary to the GitHub release when it's done.`)
   comment:
     needs: [release, windows]
     runs-on: ubuntu-latest
@@ -134,7 +165,7 @@ jobs:
     - name: Create comment
       uses: peter-evans/create-or-update-comment@v1
       with:
-        token: ${{ secrets.DENNIS_PAT }}
+        token: ${{ secrets.GH_SIGNAL_DESKTOP_TOKEN }}
         repository: dennisameling/Signal-Desktop
         issue-number: 4
         body: |

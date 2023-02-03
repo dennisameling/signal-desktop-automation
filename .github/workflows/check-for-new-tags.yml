@@ -1,0 +1,51 @@
+name: Check for new tags
+
+on:
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-new-tags:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/github-script@v6
+      name: Check for new releases in signalapp/Signal-Desktop
+      with:
+        script: |
+          const latestRelease = await github.rest.repos.getLatestRelease({
+              owner: 'signalapp',
+              repo: 'Signal-Desktop'
+          })
+          const latestTag = latestRelease.data.tag_name
+          core.info(`Latest tag on signalapp/Signal-Desktop is ${latestTag}`)
+
+          // Check if this tag also exists on dennisameling/Signal-Desktop already
+          try {
+            const latestReleaseDennis = await octo.rest.repos.getReleaseByTag({
+              owner: 'dennisameling',
+              repo: 'Signal-Desktop',
+              tag: latestTag
+            })
+            core.info(`Release ${latestTag} already exists in dennisameling/Signal-Desktop. Nothing to do.`)
+          } catch (e) {
+              if (e.status && e.status === 404) {
+                core.info(`Release for Signal version ${latestTag} doesn't seem to exist yet on dennisameling/Signal-Desktop. Triggering a release.`)
+
+                await octo.rest.actions.createWorkflowDispatch({
+                    owner: 'dennisameling',
+                    repo: 'signal-desktop-automation',
+                    workflow_id: 'release.yml',
+                    ref: 'main',
+                    inputs: {
+                        release: 'true',
+                        ref_to_build: latestTag
+                    }
+                })
+
+                core.info('Successfully created GitHub Actions workflow dispatch. Watch the CI run at https://github.com/dennisameling/signal-desktop-automation/actions/workflows/release.yml')
+              } else {
+                core.setFailed(`Unknown error while getting release by tag: ${e.message}`)
+              }
+          }
