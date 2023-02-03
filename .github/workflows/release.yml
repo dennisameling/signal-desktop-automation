@@ -125,6 +125,7 @@ jobs:
       with:
         owner: dennisameling
         repo: Signal-Desktop
+        tag: ${{ inputs.ref_to_build }}
         body: |
           This is the v${{ env.SIGNAL_VERSION }} release. Existing users of Signal Unofficial will get an in-app update notification.
 
