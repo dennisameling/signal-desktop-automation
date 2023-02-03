@@ -20,8 +20,8 @@ jobs:
           name: "Setup environment variables"
           command: |
             SIGNAL_DESKTOP_TAG="<< pipeline.parameters.ref_to_build >>"
-            echo 'export SIGNAL_DESKTOP_TAG=$SIGNAL_DESKTOP_TAG' >> "$BASH_ENV"
-            echo 'export SIGNAL_DESKTOP_VERSION=${SIGNAL_DESKTOP_TAG#"v"}' >> "$BASH_ENV"
+            echo 'export SIGNAL_DESKTOP_TAG="'$SIGNAL_DESKTOP_TAG'" >> "$BASH_ENV"
+            echo 'export SIGNAL_DESKTOP_VERSION="'${SIGNAL_DESKTOP_TAG#"v"}'"' >> "$BASH_ENV"
             echo 'export GITHUB_ACTIONS_RELEASE_UPLOAD_URL="<< pipeline.parameters.github_actions_release_upload_url >>"' >> "$BASH_ENV"
       - run: |
           echo "Running pipeline with the following environment variables:"
