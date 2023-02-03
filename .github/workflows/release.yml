@@ -135,7 +135,7 @@ jobs:
           **Note:** this release also contains a `.deb` file for Linux users. Note that auto-updates are **not** supported on this platform.
         name: v${{ env.SIGNAL_VERSION }}
         token: ${{ secrets.GH_SIGNAL_DESKTOP_TOKEN }}
-    - uses: actions/github-script@v6
+    - uses: actions/github-script@v6.4.0
       name: Trigger CircleCI build + publish
       env:
         CIRCLECI_API_TOKEN: ${{ secrets.CIRCLECI_API_TOKEN }}
