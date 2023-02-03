@@ -39,7 +39,7 @@ jobs:
     - name: Create ${{ inputs.ref_to_build }} tag in dennisameling/Signal-Desktop
       run: |
         git remote add dennis https://github.com/dennisameling/Signal-Desktop
-        git push --force dennis $SIGNAL_TAG
+        git push --force dennis HEAD:$SIGNAL_TAG
 
     - uses: actions/checkout@v3
       with:
