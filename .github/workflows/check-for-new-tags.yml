@@ -23,7 +23,7 @@ jobs:
 
           // Check if this tag also exists on dennisameling/Signal-Desktop already
           try {
-            const latestReleaseDennis = await octo.rest.repos.getReleaseByTag({
+            const latestReleaseDennis = await github.rest.repos.getReleaseByTag({
               owner: 'dennisameling',
               repo: 'Signal-Desktop',
               tag: latestTag
@@ -33,7 +33,7 @@ jobs:
               if (e.status && e.status === 404) {
                 core.info(`Release for Signal version ${latestTag} doesn't seem to exist yet on dennisameling/Signal-Desktop. Triggering a release.`)
 
-                await octo.rest.actions.createWorkflowDispatch({
+                await github.rest.actions.createWorkflowDispatch({
                     owner: 'dennisameling',
                     repo: 'signal-desktop-automation',
                     workflow_id: 'release.yml',
