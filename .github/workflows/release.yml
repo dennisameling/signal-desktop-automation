@@ -35,6 +35,7 @@ jobs:
         repository: 'signalapp/signal-desktop'
         ref: ${{ inputs.ref_to_build }}
         token: ${{ secrets.GH_SIGNAL_DESKTOP_TOKEN }}
+        fetch-depth: 0
 
     - name: Create ${{ inputs.ref_to_build }} tag in dennisameling/Signal-Desktop
       shell: bash
