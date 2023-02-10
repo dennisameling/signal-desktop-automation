@@ -40,7 +40,7 @@ jobs:
       shell: bash
       run: |
         git remote add dennis https://github.com/dennisameling/Signal-Desktop
-        git push --force dennis HEAD:$SIGNAL_TAG
+        git push --force dennis HEAD:refs/tags/$SIGNAL_TAG
 
     - uses: actions/checkout@v3
       with:
