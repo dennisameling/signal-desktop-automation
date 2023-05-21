@@ -126,7 +126,7 @@ jobs:
         body: |
           This is the v${{ env.SIGNAL_VERSION }} release. Existing users of Signal Unofficial will get an in-app update notification.
 
-          **Starting May 21st 2023, my `.exe` Windows releases will no longer be code signed. Such certificates [suddendly cost $250+](https://comodosslstore.com/codesigning.aspx) for a 1-year cert due to new regulations, which is not worth it.**
+          **Starting May 21st 2023, my `.exe` Windows releases will no longer be code signed. See [this post](https://github.com/dennisameling/Signal-Desktop/issues/16) for more details.**
 
           Windows arm64:
           https://signal.dennisameling.com/dl/signal-desktop-unofficial-win-arm64-${{ env.SIGNAL_VERSION }}.exe
@@ -157,18 +157,3 @@ jobs:
           });
 
           console.log(`Successfully started CircleCI pipeline. It'll add the generated binary to the GitHub release when it's done.`)
-  comment:
-    needs: [release, windows]
-    runs-on: ubuntu-latest
-    if: inputs.release == 'true'
-
-    steps:
-    - name: Create comment
-      uses: peter-evans/create-or-update-comment@v1
-      with:
-        token: ${{ secrets.GH_SIGNAL_DESKTOP_TOKEN }}
-        repository: dennisameling/Signal-Desktop
-        issue-number: 4
-        body: |
-          This is an automated message that version **${{ needs.release.outputs.signal_version }}** is now live. Existing users of Signal Unofficial will get an in-app update notification.
-          Release URL: ${{ needs.release.outputs.release_url }}
