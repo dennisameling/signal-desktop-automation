@@ -21,10 +21,6 @@ jobs:
   windows:
     runs-on: windows-latest
 
-    env:
-      CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-      CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-
     defaults:
       run:
         shell: pwsh
@@ -129,6 +125,8 @@ jobs:
         tag: ${{ inputs.ref_to_build }}
         body: |
           This is the v${{ env.SIGNAL_VERSION }} release. Existing users of Signal Unofficial will get an in-app update notification.
+
+          **Starting May 21st 2023, my `.exe` Windows releases will no longer be code signed. Such certificates [suddendly cost $250+](https://comodosslstore.com/codesigning.aspx) for a 1-year cert due to new regulations, which is not worth it.**
 
           Windows arm64:
           https://signal.dennisameling.com/dl/signal-desktop-unofficial-win-arm64-${{ env.SIGNAL_VERSION }}.exe
