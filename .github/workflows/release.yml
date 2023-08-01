@@ -26,11 +26,18 @@ jobs:
         shell: pwsh
 
     steps:
+    - name: Get GH token
+      id: generate_token
+      uses: tibdex/github-app-token@c2055a00597a80f713b78b1650e8d3418f4d9a65
+      with:
+        app_id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
+        private_key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
+
     - uses: actions/checkout@v3
       with:
         repository: 'signalapp/signal-desktop'
         ref: ${{ inputs.ref_to_build }}
-        token: ${{ secrets.GH_SIGNAL_DESKTOP_TOKEN }}
+        token: ${{ steps.generate_token.outputs.token }}
         fetch-depth: 200
 
     - name: Create ${{ inputs.ref_to_build }} tag in dennisameling/Signal-Desktop
@@ -133,7 +140,7 @@ jobs:
 
           **Note:** this release also contains a `.deb` file for Linux users. Note that auto-updates are **not** supported on this platform.
         name: v${{ env.SIGNAL_VERSION }}
-        token: ${{ secrets.GH_SIGNAL_DESKTOP_TOKEN }}
+        token: ${{ steps.generate_token.outputs.token }}
     - uses: actions/github-script@v6.4.0
       name: Trigger CircleCI build + publish
       env:
