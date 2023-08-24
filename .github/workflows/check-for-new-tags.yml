@@ -2,7 +2,7 @@ name: Check for new tags
 
 on:
   schedule:
-    - cron: '22 3,8,13,18,23 * * *'
+    - cron: '22 1,3,5,8,18,23 * * *'
   workflow_dispatch:
 
 jobs:
