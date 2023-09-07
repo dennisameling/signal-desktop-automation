@@ -60,7 +60,7 @@ jobs:
       - run: yarn generate
       - run: yarn prepare-beta-build
       - run:
-          command: export USE_SYSTEM_FPM=true && yarn build
+          command: export USE_SYSTEM_FPM=true && yarn build -- --publish=never
           environment:
             DISABLE_INSPECT_FUSE: on
       - run: xvfb-run --auto-servernum yarn test-node
