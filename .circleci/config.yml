@@ -60,7 +60,7 @@ jobs:
       - run: yarn generate
       - run: yarn prepare-beta-build
       - run:
-          command: export USE_SYSTEM_FPM=true && yarn build -- --publish=never
+          command: export USE_SYSTEM_FPM=true && yarn build --publish=never
           environment:
             DISABLE_INSPECT_FUSE: on
       - run: xvfb-run --auto-servernum yarn test-node
@@ -83,7 +83,7 @@ jobs:
             FILENAME=$(find signal-desktop-unofficial*.deb -print -quit)
             echo "Will be uploading $FILENAME to GitHub Release"
 
-            # GH adds some weird prefix to their assets URL. Let's remove it: {?name,label}
+            # GH adds some weird suffix to their assets URL. Let's remove it: {?name,label}
             UPLOAD_URL="${GITHUB_ACTIONS_RELEASE_UPLOAD_URL/\{\?name,label\}/}"
             echo "Will be uploading to $UPLOAD_URL"
 
