@@ -139,8 +139,6 @@ jobs:
         body: |
           This is the v${{ env.SIGNAL_VERSION }} release. Existing users of Signal Unofficial will get an in-app update notification.
 
-          **Starting May 21st 2023, my `.exe` Windows releases will no longer be code signed. See [this post](https://github.com/dennisameling/Signal-Desktop/issues/16) for more details.**
-
           Windows arm64:
           https://signal.dennisameling.com/dl/signal-desktop-unofficial-win-arm64-${{ env.SIGNAL_VERSION }}.exe
 
