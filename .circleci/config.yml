@@ -37,7 +37,7 @@ jobs:
             nvm install
             nvm use
             nvm alias default $(nvm current)
-            npm install --location=global yarn
+            npm install --location=global yarn@1.22.10 npm@10.2.5
       - run:
           # https://discuss.circleci.com/t/changed-behaviour-of-nvm-alias-after-migrating-to-new-machine-image/42965
           name: "Enforce nvm use default"
