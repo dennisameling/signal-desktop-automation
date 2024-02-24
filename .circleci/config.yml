@@ -11,9 +11,7 @@ parameters:
 jobs:
   build:
     machine:
-      # Fixed to this version due to issues with Git LFS
-      # https://discuss.circleci.com/t/git-lfs-broken-in-recent-ubuntu-20-04-machine-images-arm64/46473/1
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:2023.07.1
     resource_class: arm.medium
     steps:
       - run:
@@ -44,6 +42,7 @@ jobs:
           command: |
             echo "nvm use default" >> $BASH_ENV
       - run: sudo apt-get update && sudo apt-get install xvfb libgbm-dev build-essential ruby git-lfs
+      - run: which git-lfs && git-lfs --version
       - run: git lfs install
       - run:
           name: Install FPM (for packaging)
