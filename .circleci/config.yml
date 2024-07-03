@@ -35,7 +35,7 @@ jobs:
             nvm install
             nvm use
             nvm alias default $(nvm current)
-            npm install --location=global yarn@1.22.10 npm@10.2.5
+            npm install --location=global npm@10.2.5
       - run:
           # https://discuss.circleci.com/t/changed-behaviour-of-nvm-alias-after-migrating-to-new-machine-image/42965
           name: "Enforce nvm use default"
@@ -55,16 +55,16 @@ jobs:
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - run: PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
       # We need git-lfs for the better-sqlite3 dependency
-      - run: which node && which npm && which yarn && which fpm && yarn install --frozen-lockfile
-      - run: yarn generate
-      - run: yarn prepare-beta-build
+      - run: which node && which npm && which fpm && npm ci --legacy-peer-deps
+      - run: npm run generate
+      - run: npm run prepare-beta-build
       - run:
-          command: export USE_SYSTEM_FPM=true && yarn build --publish=never
+          command: export USE_SYSTEM_FPM=true && npm run build --publish=never
           environment:
             DISABLE_INSPECT_FUSE: on
-      - run: xvfb-run --auto-servernum yarn test-node
+      - run: xvfb-run --auto-servernum npm run test-node
       - run:
-          command: xvfb-run --auto-servernum yarn test-electron
+          command: xvfb-run --auto-servernum npm run test-electron
           environment:
             LANG: en_US
             LANGUAGE: en_US
