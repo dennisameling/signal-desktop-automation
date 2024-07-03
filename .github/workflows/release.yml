@@ -78,7 +78,7 @@ jobs:
     - run: npm run test-electron
       timeout-minutes: 5
     - run: |
-        npm-run sign-release
+        npm run sign-release
         Remove-Item public.key
         Remove-Item private.key
     - name: Upload artifacts
