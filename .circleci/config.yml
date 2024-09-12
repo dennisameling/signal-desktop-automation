@@ -21,8 +21,8 @@ jobs:
             echo 'export SIGNAL_DESKTOP_TAG="'$SIGNAL_DESKTOP_TAG'"' >> "$BASH_ENV"
             echo 'export SIGNAL_DESKTOP_VERSION="'${SIGNAL_DESKTOP_TAG#"v"}'"' >> "$BASH_ENV"
             echo 'export GITHUB_ACTIONS_RELEASE_UPLOAD_URL="<< pipeline.parameters.github_actions_release_upload_url >>"' >> "$BASH_ENV"
-            # Use Ruby to fetch the gem bin directory and add it to PATH
             echo 'export PATH="$(ruby -e 'puts Gem.bindir'):$PATH"' >> "$BASH_ENV"
+            cat $BASH_ENV
       - run: |
           echo "Running pipeline with the following environment variables:"
           echo "SIGNAL_DESKTOP_TAG=$SIGNAL_DESKTOP_TAG"
