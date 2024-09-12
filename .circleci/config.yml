@@ -42,6 +42,7 @@ jobs:
           command: |
             echo "nvm use default" >> $BASH_ENV
       - run: sudo apt-get update && sudo apt-get install xvfb libgbm-dev build-essential ruby git-lfs
+      - run: echo "GCC version is $(gcc --version)"
       - run: which git-lfs && git-lfs --version
       - run: git lfs install
       - run:
