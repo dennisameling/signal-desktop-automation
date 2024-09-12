@@ -21,6 +21,8 @@ jobs:
             echo 'export SIGNAL_DESKTOP_TAG="'$SIGNAL_DESKTOP_TAG'"' >> "$BASH_ENV"
             echo 'export SIGNAL_DESKTOP_VERSION="'${SIGNAL_DESKTOP_TAG#"v"}'"' >> "$BASH_ENV"
             echo 'export GITHUB_ACTIONS_RELEASE_UPLOAD_URL="<< pipeline.parameters.github_actions_release_upload_url >>"' >> "$BASH_ENV"
+            # Use Ruby to fetch the gem bin directory and add it to PATH
+            echo 'export PATH="$(ruby -e 'puts Gem.bindir'):$PATH"' >> "$BASH_ENV"
       - run: |
           echo "Running pipeline with the following environment variables:"
           echo "SIGNAL_DESKTOP_TAG=$SIGNAL_DESKTOP_TAG"
@@ -36,6 +38,8 @@ jobs:
             nvm use
             nvm alias default $(nvm current)
             npm install --location=global npm@10.2.5
+            # Add nvm to PATH
+            echo "nvm use default" >> $BASH_ENV
       - run: printenv && gem env
       - run: sudo apt update && sudo apt install -y libgbm-dev git-lfs
       - run: echo "GCC version is $(gcc --version)"
