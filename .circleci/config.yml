@@ -36,7 +36,7 @@ jobs:
             nvm use
             nvm alias default $(nvm current)
             npm install --location=global npm@10.2.5
-      - run: source printenv && gem env
+      - run: printenv && gem env
       - run: sudo apt update && sudo apt install -y libgbm-dev git-lfs
       - run: echo "GCC version is $(gcc --version)"
       - run: which git-lfs && git-lfs --version
