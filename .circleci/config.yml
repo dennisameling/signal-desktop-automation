@@ -41,7 +41,7 @@ jobs:
           name: "Enforce nvm use default"
           command: |
             echo "nvm use default" >> $BASH_ENV
-      - run: sudo apt update && sudo apt install -y xvfb libgbm-dev build-essential ruby git-lfs
+      - run: sudo apt update && NEEDRESTART_MODE=a sudo apt install -y xvfb libgbm-dev build-essential ruby git-lfs
       - run: echo "GCC version is $(gcc --version)"
       - run: which git-lfs && git-lfs --version
       - run: git lfs install
