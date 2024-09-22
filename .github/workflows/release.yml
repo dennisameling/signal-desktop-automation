@@ -65,6 +65,9 @@ jobs:
     - name: Overwrite updates server, public key, etc.
       shell: bash
       run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
+    - name: Copy our patches into the patches directory
+      shell: bash
+      run: cp -v ./tmp-automation-release-scripts/patches/* patches/
     - run: git diff
 
     # Workaround for https://github.com/signalapp/Signal-Desktop/issues/7010
