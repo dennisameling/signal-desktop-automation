@@ -69,21 +69,8 @@ jobs:
       shell: bash
       run: cp -v ./tmp-automation-release-scripts/patches/* patches/
     - run: git diff
-
-    # Workaround for https://github.com/signalapp/Signal-Desktop/issues/7010
-    # Make sure to also switch back to "npm ci" instead of "npm install" later for better performance
-    - name: Temporary fix for better-sqlite3 (2024-09)
-      shell: bash
-      run: |
-        if grep -q '"@signalapp/better-sqlite3": "8.8.1"' ./package.json; then
-          # If the string exists, run sed to replace it
-          sed -i 's|"@signalapp/better-sqlite3": "8.8.1"|"@signalapp/better-sqlite3": "git://github.com/dennisameling/better-sqlite3.git#windows-arm64-workaround-2024-09"|' ./package.json
-        else
-          echo "Error: better-sqlite3 8.8.1 not found in package.json, it was probably updated by upstream Signal Desktop. This worarkound might no longer be needed!"
-          exit 1
-        fi
     - name: Install Desktop node_modules
-      run: npm install --legacy-peer-deps
+      run: npm ci --legacy-peer-deps
     - run: npm run generate
     - run: npm run build
       env:
