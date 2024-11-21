@@ -139,12 +139,19 @@ jobs:
         repo: Signal-Desktop
         tag: ${{ inputs.ref_to_build }}
         body: |
+          ## Windows arm64
+
           This is the v${{ env.SIGNAL_VERSION }} release. Existing users of Signal Unofficial will get an in-app update notification.
 
           Windows arm64:
           https://signal.dennisameling.com/dl/signal-desktop-unofficial-win-arm64-${{ env.SIGNAL_VERSION }}.exe
 
-          **Note:** this release also contains a `.deb` file for Linux users. Note that auto-updates are **not** supported on this platform.
+          > [!WARNING]  
+          > Signal has launched [official Windows arm64 support](https://github.com/signalapp/Signal-Desktop/issues/3745#issuecomment-2489355026) with the 7.34.0 version, meaning that I will no longer be offering builds for Signal Unofficial. The last release here will probably be 7.35.0. **You can migrate to the official client while keeping all your chat history and data**. Instructions are [here](https://github.com/dennisameling/Signal-Desktop/issues/24#issuecomment-2490816224).
+
+          ## Linux arm64
+
+          This release contains a `.deb` file for Linux users. Note that auto-updates are **not** supported on this platform.
         name: v${{ env.SIGNAL_VERSION }}
         token: ${{ steps.generate_token.outputs.token }}
     - uses: actions/github-script@v7.0.1
