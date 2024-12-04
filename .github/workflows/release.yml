@@ -18,98 +18,7 @@ env:
   SIGNAL_TAG: ${{ inputs.ref_to_build }}
 
 jobs:
-  windows:
-    runs-on: windows-2019
-
-    defaults:
-      run:
-        shell: pwsh
-
-    steps:
-    - name: Get GH token
-      id: generate_token
-      uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-      with:
-        app_id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
-        private_key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
-
-    - uses: actions/checkout@v4
-      with:
-        repository: 'signalapp/signal-desktop'
-        ref: ${{ inputs.ref_to_build }}
-        token: ${{ steps.generate_token.outputs.token }}
-        fetch-depth: 200
-
-    - name: Create ${{ inputs.ref_to_build }} tag in dennisameling/Signal-Desktop
-      shell: bash
-      run: |
-        git remote add dennis https://github.com/dennisameling/Signal-Desktop
-        git push --force dennis HEAD:refs/tags/$SIGNAL_TAG
-
-    - uses: actions/checkout@v4
-      with:
-        path: ./tmp-automation-release-scripts
-
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: '.nvmrc'
-    - run: npm install -g npm@10.2.5 node-gyp@10.0.1
-
-    - name: Prepare release signing
-      shell: bash
-      run: |
-        echo ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }} >> public.key
-        echo ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }} >> private.key
-
-    # The script below ensures that we overwrite some defaults from the official Signal repo
-    - name: Overwrite updates server, public key, etc.
-      shell: bash
-      run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
-    - name: Copy our patches into the patches directory
-      shell: bash
-      run: cp -v ./tmp-automation-release-scripts/patches/* patches/
-    - run: git diff
-    - name: Install Desktop node_modules
-      run: npm ci --legacy-peer-deps
-    - run: npm run generate
-    - run: npm run build
-      env:
-        DISABLE_INSPECT_FUSE: on
-    # Rebuild deps for tests
-    - run: npm run electron:install-app-deps
-    - run: npm run test-electron
-      timeout-minutes: 5
-    - run: |
-        npm run sign-release
-        Remove-Item public.key
-        Remove-Item private.key
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: signal-desktop-win-all
-        path: |
-          release/*.exe
-          release/*.exe.sig
-          release/latest*.yml
-    - name: Copy files for FTP upload
-      if: inputs.release == 'true'
-      shell: bash
-      run: |
-        mkdir -p release-ftp
-        cp release/*.exe release-ftp
-        cp release/*.exe.sig release-ftp
-        cp release/latest*.yml release-ftp        
-    - name: Deploy binaries
-      if: inputs.release == 'true'
-      uses: dennisameling/ftp-upload-action@v1
-      with:
-        server: ${{ secrets.FTP_HOST }}
-        username: ${{ secrets.FTP_USER }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        local_dir: ./release-ftp/
-
   release:
-    needs: windows
     runs-on: ubuntu-latest
     if: inputs.release == 'true'
 
@@ -139,19 +48,16 @@ jobs:
         repo: Signal-Desktop
         tag: ${{ inputs.ref_to_build }}
         body: |
-          ## Windows arm64
-
-          This is the v${{ env.SIGNAL_VERSION }} release. Existing users of Signal Unofficial will get an in-app update notification.
-
-          Windows arm64:
-          https://signal.dennisameling.com/dl/signal-desktop-unofficial-win-arm64-${{ env.SIGNAL_VERSION }}.exe
-
-          > [!WARNING]  
-          > Signal has launched [official Windows arm64 support](https://github.com/signalapp/Signal-Desktop/issues/3745#issuecomment-2489355026) with the 7.34.0 version, meaning that I will no longer be offering builds for Signal Unofficial. The last release here will probably be 7.35.0. **You can migrate to the official client while keeping all your chat history and data**. Instructions are [here](https://github.com/dennisameling/Signal-Desktop/issues/24#issuecomment-2490816224).
+          This is the v${{ env.SIGNAL_VERSION }} release.
 
           ## Linux arm64
 
           This release contains a `.deb` file for Linux users. Note that auto-updates are **not** supported on this platform.
+
+          ## Windows arm64
+
+          > [!WARNING]  
+          > Official support for Windows arm64 [was added in Signal 7.34.0](https://github.com/signalapp/Signal-Desktop/issues/3745#issuecomment-2489355026), meaning that I will no longer be offering builds for Signal Unofficial. The last release here is 7.35.0. **You can migrate to the official client while keeping all your chat history and data**. Instructions are [here](https://github.com/dennisameling/Signal-Desktop/issues/24#issuecomment-2490816224).
         name: v${{ env.SIGNAL_VERSION }}
         token: ${{ steps.generate_token.outputs.token }}
     - uses: actions/github-script@v7.0.1
