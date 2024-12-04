@@ -55,8 +55,6 @@ jobs:
             echo $SIGN_RELEASE_PRIVATE_KEY >> private.key
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - run: PUBLIC_KEY="$SIGN_RELEASE_PUBLIC_KEY" SIGNAL_DIR="$CIRCLE_WORKING_DIRECTORY" node ./tmp-automation-release-scripts/patch-files.mjs
-      # Copy files to the patches/ directory which will be picked up by patch-package as a postinstall script
-      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
       # We need git-lfs for the better-sqlite3 dependency
       - run: which node && which npm && npm ci --legacy-peer-deps
       - run: npm run generate
