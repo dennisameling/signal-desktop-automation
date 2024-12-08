@@ -10,11 +10,11 @@ index a55c2d9..95760e0 100644
 +  try {
 +    console.log(`Going to create empty file ${file}`)
 +    await fs.writeFile(file, '')
-+  } catch (e) {
++  } catch (err) {
 +    if (process.platform === 'linux' && process.arch === 'arm64') {
 +      console.log(`Error while creating empty file, but ignoring since this is Linux arm64 and the file has most likely been created just fine: ${err}`)
 +    } else {
-+      throw e
++      throw err
 +    }
 +  }
 +}
