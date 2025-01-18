@@ -49,6 +49,11 @@ jobs:
           node-version-file: '.nvmrc'
       - run: sudo apt-get install xvfb libpulse0
       - run: npm install -g npm@10.2.5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install FPM (for packaging)
+        run: gem install fpm
       - name: Prepare release signing
         run: |
           echo ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }} >> public.key
@@ -64,6 +69,7 @@ jobs:
       - run: npm run prepare-beta-build
       - run: npm run build --publish=never
         env:
+          USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
       - run: xvfb-run --auto-servernum npm run test-node
       - run: xvfb-run --auto-servernum npm run test-electron
