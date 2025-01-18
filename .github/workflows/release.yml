@@ -49,6 +49,8 @@ jobs:
           node-version-file: '.nvmrc'
       - run: sudo apt-get install xvfb libpulse0
       - run: npm install -g npm@10.2.5
+      - name: Install FPM (for packaging)
+        run: gem install fpm
 
       - name: Prepare release signing
         run: |
