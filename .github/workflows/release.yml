@@ -18,7 +18,63 @@ env:
   SIGNAL_TAG: ${{ inputs.ref_to_build }}
 
 jobs:
+  linux:
+    runs-on: ubuntu-22.04-arm
+
+    steps:
+      # Checkout repos
+      - name: Get GH token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
+          private_key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
+      - uses: actions/checkout@v4
+        with:
+          repository: 'signalapp/signal-desktop'
+          ref: ${{ inputs.ref_to_build }}
+          token: ${{ steps.generate_token.outputs.token }}
+          fetch-depth: 200
+      - name: Create ${{ inputs.ref_to_build }} tag in dennisameling/Signal-Desktop
+        run: |
+          git remote add dennis https://github.com/dennisameling/Signal-Desktop
+          git push --force dennis HEAD:refs/tags/$SIGNAL_TAG
+      - uses: actions/checkout@v4
+        with:
+          path: ./tmp-automation-release-scripts
+
+      # Install NodeJS and prepare dependencies
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - run: sudo apt-get install xvfb libpulse0
+      - run: npm install -g npm@10.2.5
+
+      - name: Prepare release signing
+        run: |
+          echo ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }} >> public.key
+          echo ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }} >> private.key
+
+      # The script below ensures that we overwrite some defaults from the official Signal repo
+      - name: Overwrite updates server, public key, etc.
+        run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
+      # Copy files to the patches/ directory which will be picked up by patch-package as a postinstall script
+      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
+      - run: npm ci --legacy-peer-deps
+      - run: npm run generate
+      - run: npm run prepare-beta-build
+      - run: npm run build --publish=never
+        env:
+          USE_SYSTEM_FPM: 'true'
+          DISABLE_INSPECT_FUSE: 'on'
+      - run: xvfb-run --auto-servernum npm run test-node
+      - run: xvfb-run --auto-servernum npm run test-electron
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-binaries
+          path: release/signal-desktop-unofficial*
   release:
+    needs: linux
     runs-on: ubuntu-latest
     if: inputs.release == 'true'
 
@@ -41,11 +97,16 @@ jobs:
         echo "SIGNAL_VERSION=${SIGNAL_VERSION}" >> $GITHUB_ENV
         echo "SIGNAL_TAG=${SIGNAL_TAG}" >> $GITHUB_ENV
         echo "::set-output name=version::${SIGNAL_VERSION}"
+    - uses: actions/download-artifact@v4
+      with:
+        name: release-binaries
+        path: binaries
     - uses: ncipollo/release-action@v1
       id: release-url
       with:
         owner: dennisameling
         repo: Signal-Desktop
+        artifacts: 'binaries/*'
         tag: ${{ inputs.ref_to_build }}
         body: |
           This is the v${{ env.SIGNAL_VERSION }} release.
@@ -60,26 +121,3 @@ jobs:
           > Official support for Windows arm64 [was added in Signal 7.34.0](https://github.com/signalapp/Signal-Desktop/issues/3745#issuecomment-2489355026), meaning that I will no longer be offering builds for Signal Unofficial. The last release with Windows arm64 support here is 7.35.0. **You can migrate to the official client while keeping all your chat history and data**. Instructions are [here](https://github.com/dennisameling/Signal-Desktop/issues/24#issuecomment-2490816224).
         name: v${{ env.SIGNAL_VERSION }}
         token: ${{ steps.generate_token.outputs.token }}
-    - uses: actions/github-script@v7.0.1
-      name: Trigger CircleCI build + publish
-      env:
-        CIRCLECI_API_TOKEN: ${{ secrets.CIRCLECI_API_TOKEN }}
-        GITHUB_RELEASE_UPLOAD_URL: ${{ steps.release-url.outputs.upload_url }}
-      with:
-        script: |
-          await fetch('https://circleci.com/api/v2/project/gh/dennisameling/signal-desktop-automation/pipeline', {
-            method: 'post',
-            body: JSON.stringify({
-              branch: 'main',
-              parameters: {
-                ref_to_build: process.env.SIGNAL_TAG,
-                github_actions_release_upload_url: process.env.GITHUB_RELEASE_UPLOAD_URL
-              }
-            }),
-            headers: {
-              'Circle-Token': process.env.CIRCLECI_API_TOKEN,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          console.log(`Successfully started CircleCI pipeline. It'll add the generated binary to the GitHub release when it's done.`)
