@@ -106,6 +106,7 @@ jobs:
       with:
         owner: dennisameling
         repo: Signal-Desktop
+        makeLatest: true
         artifacts: 'binaries/*'
         tag: ${{ inputs.ref_to_build }}
         body: |
