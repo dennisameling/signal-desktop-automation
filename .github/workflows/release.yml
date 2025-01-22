@@ -67,7 +67,7 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm run generate
       - run: npm run prepare-beta-build
-      - run: npm run build --publish=never
+      - run: npm run build -- --publish=never
         env:
           USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
