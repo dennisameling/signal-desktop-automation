@@ -62,7 +62,7 @@ jobs:
       - run: npm run generate
       - run: npm run prepare-beta-build
       - run:
-          command: export USE_SYSTEM_FPM=true && npm run build --publish=never
+          command: export USE_SYSTEM_FPM=true && npm run build -- --publish=never
           environment:
             DISABLE_INSPECT_FUSE: on
       - run: xvfb-run --auto-servernum npm run test-node
