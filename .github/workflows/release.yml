@@ -73,10 +73,11 @@ jobs:
       - run: npm run prepare-beta-build
       - name: Create bundle
         run: npm run build:esbuild:prod
-      - name: Create preload cache
-        run: xvfb-run --auto-servernum npm run build:preload-cache
-        env:
-          ARTIFACTS_DIR: artifacts/linux
+      # Doesn't seem to work and no logs, so skipping it  
+      #- name: Create preload cache
+      #  run: xvfb-run --auto-servernum npm run build:preload-cache
+      #  env:
+      #    ARTIFACTS_DIR: artifacts/linux
       - name: Build with packaging .deb file
         run: npm run build:release -- --publish=never
         env:
