@@ -19,7 +19,7 @@ env:
 
 jobs:
   linux:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-22.04-arm
 
     steps:
       # Checkout repos
@@ -42,10 +42,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: ./tmp-automation-release-scripts
-
-      # https://github.com/electron/electron/issues/42510#issuecomment-2171583086
-      - name: Disable AppArmor unprivileged because it causes "test-node" to fail
-        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       # Install NodeJS and prepare dependencies
       - uses: actions/setup-node@v4
