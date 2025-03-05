@@ -85,7 +85,7 @@ jobs:
       #  env:
       #    ARTIFACTS_DIR: artifacts/linux
       - name: Build with packaging .deb file
-        run: pnpm run build:release -- --publish=never
+        run: pnpm run build:release --publish=never
         env:
           USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
