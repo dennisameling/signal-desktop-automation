@@ -44,6 +44,10 @@ jobs:
           path: ./tmp-automation-release-scripts
 
       # Install NodeJS and prepare dependencies
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.3.0
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
