@@ -121,7 +121,7 @@ jobs:
         SIGNAL_VERSION=${SIGNAL_TAG#"v"}
         echo "SIGNAL_VERSION=${SIGNAL_VERSION}" >> $GITHUB_ENV
         echo "SIGNAL_TAG=${SIGNAL_TAG}" >> $GITHUB_ENV
-        echo "::set-output name=version::${SIGNAL_VERSION}"
+        echo "version=${SIGNAL_VERSION}" >> $GITHUB_OUTPUT
     - uses: actions/download-artifact@v4
       with:
         name: release-binaries
