@@ -34,6 +34,18 @@ const overwritePackageJson = () => {
     
     parsedConfig.build.appId = 'com.dennisameling.signal-desktop'
 
+    console.log('⏳ Adding patches to the pnpm.patchedDependencies section in package.json...')
+
+    if (!parsedConfig.pnpm || !parsedConfig.pnpm.patchedDependencies) {
+        throw new Error(`pnpm.patchedDependencies missing in ${filePath}. Cannot apply patches.`)
+    }
+
+    // This patch is for arm64 Linux on Raspberry Pi devices.
+    parsedConfig.pnpm.patchedDependencies["fs-extra@11.2.0"] = "patches/fs-extra+11.2.0.patch"
+
+    console.log('✅ The following patches will be applied:')
+    console.log(JSON.stringify(parsedConfig.pnpm.patchedDependencies, null, 2))
+
     writeFileSync(filePath, JSON.stringify(parsedConfig, null, 2), {encoding: 'utf-8'})
 }
 

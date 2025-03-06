@@ -65,12 +65,13 @@ jobs:
           echo ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }} >> public.key
           echo ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }} >> private.key
 
+      # Copy files to the patches/ directory where all of Signal's per-dependency patches live
+      # NOTE: after creating a patch, make sure to add it to patch-files.mjs too!
+      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
+
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - name: Overwrite updates server, public key, etc.
         run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
-        
-      # Copy files to the patches/ directory which will be picked up by patch-package as a postinstall script
-      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
 
       # The steps below pretty much exactly mimic the official build
       # https://github.com/signalapp/Signal-Desktop/blob/main/.github/workflows/ci.yml
