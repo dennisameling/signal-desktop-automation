@@ -72,6 +72,12 @@ jobs:
       - name: Overwrite updates server, public key, etc.
         run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
 
+      # Build Sticker Creator
+      - working-directory: ./sticker-creator
+        run: |
+          pnpm install
+          pnpm run build
+      
       # The steps below pretty much exactly mimic the official build
       # https://github.com/signalapp/Signal-Desktop/blob/main/.github/workflows/ci.yml
       # Note that we use --no-frozen-lockfile here because we added an entry to 
