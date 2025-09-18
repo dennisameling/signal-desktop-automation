@@ -98,7 +98,11 @@ jobs:
           USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
       - run: xvfb-run --auto-servernum pnpm run test-node
+        env:
+          ELECTRON_DISABLE_SANDBOX: true
       - run: xvfb-run --auto-servernum pnpm run test-electron
+        env:
+          ELECTRON_DISABLE_SANDBOX: true
       - uses: actions/upload-artifact@v4
         with:
           name: release-binaries
