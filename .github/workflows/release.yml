@@ -172,7 +172,7 @@ jobs:
           echo ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }} >> public.key
           echo ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }} >> private.key
 
-      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
+      # - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
 
       # github.workspace expands to the host path, which doesn't exist inside
       # the container — use $GITHUB_WORKSPACE, which Actions sets to the
