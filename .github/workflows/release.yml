@@ -29,6 +29,8 @@ jobs:
         with:
           app-id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
           private-key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
+          owner: dennisameling
+          repositories: Signal-Desktop
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: 'signalapp/signal-desktop'
@@ -140,6 +142,8 @@ jobs:
         with:
           app-id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
           private-key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
+          owner: dennisameling
+          repositories: Signal-Desktop
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: 'signalapp/signal-desktop'
@@ -228,6 +232,8 @@ jobs:
       with:
         app-id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
         private-key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
+        owner: dennisameling
+        repositories: Signal-Desktop
     # Turns v6.1.0 into 6.1.0
     - name: Get version from tag
       id: signal-version
