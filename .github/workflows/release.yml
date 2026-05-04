@@ -195,10 +195,20 @@ jobs:
         env:
           USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
-      - run: xvfb-run --auto-servernum pnpm run test-node
+
+      # Filesystem-permission tests assume non-root semantics (root bypasses
+      # the permission bits they rely on). Build as root so apt-get / system
+      # work, then drop to a non-root user for the test suite to match how
+      # the linux runner exercises it.
+      - name: Create non-root test user and hand over the workspace
+        run: |
+          useradd -m -u 2000 testuser
+          chown -R testuser:testuser "$GITHUB_WORKSPACE" /home/testuser
+
+      - run: runuser -u testuser -- xvfb-run --auto-servernum pnpm run test-node
         env:
           ELECTRON_DISABLE_SANDBOX: true
-      - run: xvfb-run --auto-servernum pnpm run test-electron
+      - run: runuser -u testuser -- xvfb-run --auto-servernum pnpm run test-electron
         env:
           ELECTRON_DISABLE_SANDBOX: true
 
