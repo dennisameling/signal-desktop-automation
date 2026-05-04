@@ -66,7 +66,7 @@ jobs:
 
       # Copy files to the patches/ directory where all of Signal's per-dependency patches live
       # NOTE: after creating a patch, make sure to add it to patch-files.mjs too!
-      #- run: cp -v ./tmp-automation-release-scripts/patches/* patches/
+      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
 
       # The script below ensures that we overwrite some defaults from the official Signal repo
       - name: Overwrite updates server, public key, etc.

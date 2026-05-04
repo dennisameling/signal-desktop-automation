@@ -41,7 +41,7 @@ const overwritePackageJson = () => {
     }
 
     // This patch is for arm64 Linux on Raspberry Pi devices.
-    // parsedConfig.pnpm.patchedDependencies["fs-extra@11.2.0"] = "patches/fs-extra+11.2.0.patch"
+    parsedConfig.pnpm.patchedDependencies["fs-extra@11.3.4"] = "patches/fs-extra+11.3.4.patch"
 
     console.log('✅ The following patches will be applied:')
     console.log(JSON.stringify(parsedConfig.pnpm.patchedDependencies, null, 2))
