@@ -29,7 +29,7 @@ jobs:
         with:
           app_id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
           private_key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: 'signalapp/signal-desktop'
           ref: ${{ inputs.ref_to_build }}
@@ -39,7 +39,7 @@ jobs:
         run: |
           git remote add dennis https://github.com/dennisameling/Signal-Desktop
           git push --force dennis HEAD:refs/tags/$SIGNAL_TAG
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           path: ./tmp-automation-release-scripts
 
@@ -47,7 +47,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
       - name: Setup node.js
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -136,20 +136,27 @@ jobs:
         with:
           app_id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
           private_key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: 'signalapp/signal-desktop'
           ref: ${{ inputs.ref_to_build }}
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 200
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           path: ./tmp-automation-release-scripts
 
+      # The workspace is owned by a different uid than the user our shell
+      # runs as inside the container, so git refuses to operate on it.
+      # actions/checkout handles this for itself under a temp HOME, but the
+      # trust does not persist to later steps (e.g. scripts/get-expire-time).
+      - name: Trust workspace dirs in git
+        run: git config --global --add safe.directory '*'
+
       - name: Setup pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+        uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v6
       - name: Setup node.js
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
