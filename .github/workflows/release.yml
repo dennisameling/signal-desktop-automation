@@ -107,8 +107,89 @@ jobs:
         with:
           name: release-binaries
           path: release/signal-desktop-unofficial*
+
+  # Smoke-build inside a Raspberry Pi OS userland to catch breakage in the
+  # arm64 Pi-specific fs-extra patch. Runs on the same ubuntu-22.04-arm host
+  # kernel, so it does not reproduce hardware-specific Pi bugs — it verifies
+  # the patch applies and the build pipeline completes against Pi OS libs.
+  test-raspberrypi:
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: ghcr.io/dtcooper/raspberrypi-os:bookworm
+
+    steps:
+      - name: Install OS dependencies
+        run: |
+          apt-get update
+          apt-get install -y \
+            git curl ca-certificates \
+            build-essential python3 \
+            ruby ruby-dev \
+            xvfb libpulse0 \
+            libnss3 libgbm1 libasound2 libsecret-1-0 \
+            fuse libfuse2
+          gem install fpm
+
+      - name: Get GH token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
+          private_key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
+      - uses: actions/checkout@v4
+        with:
+          repository: 'signalapp/signal-desktop'
+          ref: ${{ inputs.ref_to_build }}
+          token: ${{ steps.generate_token.outputs.token }}
+          fetch-depth: 200
+      - uses: actions/checkout@v4
+        with:
+          path: ./tmp-automation-release-scripts
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
+      - name: Setup node.js
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+      - run: npm install -g npm@10.2.5
+
+      - name: Prepare release signing
+        run: |
+          echo ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }} >> public.key
+          echo ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }} >> private.key
+
+      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
+
+      - name: Overwrite updates server, public key, etc.
+        run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
+
+      - working-directory: ./sticker-creator
+        run: |
+          pnpm install
+          pnpm run build
+
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm run generate
+      - run: pnpm run prepare-beta-build
+      - name: Create bundle
+        run: pnpm run build:esbuild:prod
+      - name: Build with packaging .deb file
+        run: pnpm run build:release --publish=never
+        env:
+          USE_SYSTEM_FPM: 'true'
+          DISABLE_INSPECT_FUSE: 'on'
+      - run: xvfb-run --auto-servernum pnpm run test-node
+        env:
+          ELECTRON_DISABLE_SANDBOX: true
+      - run: xvfb-run --auto-servernum pnpm run test-electron
+        env:
+          ELECTRON_DISABLE_SANDBOX: true
+
   release:
-    needs: linux
+    needs: [linux, test-raspberrypi]
     runs-on: ubuntu-latest
     if: inputs.release == 'true'
 
