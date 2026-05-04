@@ -127,6 +127,10 @@ jobs:
             ruby ruby-dev \
             xvfb libpulse0 \
             libnss3 libgbm1 libasound2 libsecret-1-0 \
+            libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            libgtk-3-0 libpango-1.0-0 libpangocairo-1.0-0 libcairo2 \
+            libgdk-pixbuf-2.0-0 libdrm2 libxshmfence1 libxkbcommon0 libxss1 \
             fuse libfuse2
           gem install fpm
 
