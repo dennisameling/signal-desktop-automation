@@ -163,8 +163,11 @@ jobs:
 
       - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
 
+      # github.workspace expands to the host path, which doesn't exist inside
+      # the container — use $GITHUB_WORKSPACE, which Actions sets to the
+      # in-container mount path.
       - name: Overwrite updates server, public key, etc.
-        run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
+        run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="$GITHUB_WORKSPACE" node ./tmp-automation-release-scripts/patch-files.mjs
 
       - working-directory: ./sticker-creator
         run: |
