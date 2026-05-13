@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(command -v actionlint)",
-      "Bash(actionlint /Users/dennisameling/repos/signal-desktop-automation/.github/workflows/release.yml)",
-      "Bash(gh api *)"
-    ]
-  }
-}
