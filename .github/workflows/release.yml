@@ -166,10 +166,11 @@ jobs:
         env:
           ELECTRON_DISABLE_SANDBOX: true
           BACKUP_INTEGRATION_DIR: 'backup-integration-tests/test-cases'
-      - run: xvfb-run --auto-servernum pnpm run test-release
-        env:
-          NODE_ENV: production
-          ELECTRON_DISABLE_SANDBOX: true
+      # `pnpm run test-release` is skipped on Linux arm64: upstream's
+      # scripts/test-release.mjs hardcodes `linux-unpacked` and doesn't yet
+      # know about `linux-arm64-unpacked`. Re-enable once
+      # https://github.com/signalapp/Signal-Desktop/pull/7202 (or equivalent)
+      # is merged.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-binaries
@@ -323,10 +324,11 @@ jobs:
         env:
           ELECTRON_DISABLE_SANDBOX: true
           BACKUP_INTEGRATION_DIR: 'backup-integration-tests/test-cases'
-      - run: runuser -u testuser -- xvfb-run --auto-servernum pnpm run test-release
-        env:
-          NODE_ENV: production
-          ELECTRON_DISABLE_SANDBOX: true
+      # `pnpm run test-release` is skipped on Linux arm64: upstream's
+      # scripts/test-release.mjs hardcodes `linux-unpacked` and doesn't yet
+      # know about `linux-arm64-unpacked`. Re-enable once
+      # https://github.com/signalapp/Signal-Desktop/pull/7202 (or equivalent)
+      # is merged.
 
   release:
     needs: [linux, test-raspberrypi]
