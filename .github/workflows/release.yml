@@ -17,9 +17,21 @@ on:
 env:
   SIGNAL_TAG: ${{ inputs.ref_to_build }}
 
+permissions: {}
+
 jobs:
   linux:
     runs-on: ubuntu-22.04-arm
+    timeout-minutes: 20
+    permissions:
+      # actions/checkout of this public repo uses GITHUB_TOKEN; the rest
+      # of the privileged work uses the GH App token explicitly.
+      contents: read
+      # Build provenance attestation: OIDC token, write to the attestation
+      # store, write to the artifact-metadata store.
+      id-token: write
+      attestations: write
+      artifact-metadata: write
 
     steps:
       # Checkout repos
@@ -37,13 +49,20 @@ jobs:
           ref: ${{ inputs.ref_to_build }}
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 200
+          persist-credentials: false
+      # Push with the token inline so we don't leave credentials in
+      # .git/config for later (untrusted) steps to read.
       - name: Create ${{ inputs.ref_to_build }} tag in dennisameling/Signal-Desktop
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          git remote add dennis https://github.com/dennisameling/Signal-Desktop
-          git push --force dennis HEAD:refs/tags/$SIGNAL_TAG
+          git push --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/dennisameling/Signal-Desktop.git" \
+            "HEAD:refs/tags/${SIGNAL_TAG}"
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           path: ./tmp-automation-release-scripts
+          persist-credentials: false
 
       # Install NodeJS and prepare dependencies
       - name: Setup pnpm
@@ -56,23 +75,29 @@ jobs:
           cache-dependency-path: 'pnpm-lock.yaml'
       - run: sudo apt-get update && sudo apt-get install xvfb libpulse0
       - run: npm install -g npm@10.2.5
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@6aaa311d81eba98ae12eaffbcb63296ace0efcde # v1.307.0
         with:
           ruby-version: '3.3'
       - name: Install FPM (for packaging)
         run: gem install fpm
+      # Write keys via env vars and printf — `echo ${{ secrets.X }}` would
+      # interpolate the secret into the shell command (injection risk) and
+      # `echo`'s word-splitting would mangle multi-line PEMs.
       - name: Prepare release signing
+        env:
+          PUB:  ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}
+          PRIV: ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }}
         run: |
-          echo ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }} >> public.key
-          echo ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }} >> private.key
+          printf '%s' "$PUB"  > public.key
+          printf '%s' "$PRIV" > private.key
+          chmod 600 private.key
 
       # Copy files to the patches/ directory where all of Signal's per-dependency patches live
       # NOTE: after creating a patch, make sure to add it to patch-files.mjs too!
       - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
 
-      # The script below ensures that we overwrite some defaults from the official Signal repo
-      - name: Overwrite updates server, public key, etc.
-        run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
+      - name: Patch package.json and pnpm-workspace.yaml
+        run: SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
 
       # Build Sticker Creator
       - working-directory: ./sticker-creator
@@ -82,14 +107,23 @@ jobs:
       
       # The steps below pretty much exactly mimic the official build
       # https://github.com/signalapp/Signal-Desktop/blob/main/.github/workflows/ci.yml
-      # Note that we use --no-frozen-lockfile here because we added an entry to 
-      # the pnpm.patchedDependencies section in package.json (see patch-files.mjs)
+      # We use --no-frozen-lockfile here because patch-files.mjs adds an
+      # entry to patchedDependencies (in pnpm-workspace.yaml), which causes
+      # pnpm to regenerate the lockfile.
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm run generate
+      # `pnpm run generate` must not touch tracked files. The exclusions
+      # below are the files we deliberately rewrite earlier in this job.
+      - name: Verify generate produced no unexpected changes
+        run: |
+          git diff --exit-code -- \
+            ':!package.json' \
+            ':!pnpm-workspace.yaml' \
+            ':!pnpm-lock.yaml'
       - run: pnpm run prepare-beta-build
       - name: Create bundle
         run: pnpm run build:esbuild:prod
-      # Doesn't seem to work and no logs, so skipping it  
+      # Doesn't seem to work and no logs, so skipping it
       #- name: Create preload cache
       #  run: xvfb-run --auto-servernum pnpm run build:preload-cache
       #  env:
@@ -99,12 +133,44 @@ jobs:
         env:
           USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
+      # SLSA build provenance attestation. The release job re-verifies this
+      # against the downloaded artifact so anything that tampered with the
+      # binary between upload and publish trips a digest mismatch.
+      - name: Attest build provenance for release binaries
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: 'release/signal-desktop-unofficial*'
       - run: xvfb-run --auto-servernum pnpm run test-node
         env:
           ELECTRON_DISABLE_SANDBOX: true
+      # Pull the same Signal-Message-Backup-Tests SHA upstream's CI uses for
+      # this Signal version, so our test-electron gates match theirs.
+      - name: Resolve backup-integration-tests SHA from Signal's CI
+        id: backup-sha
+        run: |
+          SHA=$(grep -A2 'Signal-Message-Backup-Tests' .github/workflows/ci.yml | grep -oE '[a-f0-9]{40}' | head -1)
+          if [ -z "$SHA" ]; then
+            echo "Could not find Signal-Message-Backup-Tests ref in upstream CI" >&2
+            exit 1
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Using Signal-Message-Backup-Tests @ $SHA"
+      - name: Clone backup integration tests
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: 'signalapp/Signal-Message-Backup-Tests'
+          ref: ${{ steps.backup-sha.outputs.sha }}
+          path: 'backup-integration-tests'
+          persist-credentials: false
       - run: xvfb-run --auto-servernum pnpm run test-electron
         env:
           ELECTRON_DISABLE_SANDBOX: true
+          BACKUP_INTEGRATION_DIR: 'backup-integration-tests/test-cases'
+      # `pnpm run test-release` is skipped on Linux arm64: upstream's
+      # scripts/test-release.mjs hardcodes `linux-unpacked` and doesn't yet
+      # know about `linux-arm64-unpacked`. Re-enable once
+      # https://github.com/signalapp/Signal-Desktop/pull/7202 (or equivalent)
+      # is merged.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-binaries
@@ -116,8 +182,15 @@ jobs:
   # the patch applies and the build pipeline completes against Pi OS libs.
   test-raspberrypi:
     runs-on: ubuntu-22.04-arm
+    timeout-minutes: 20
+    permissions:
+      contents: read
     container:
-      image: ghcr.io/dtcooper/raspberrypi-os:bookworm
+      # Pinned to a multi-arch index digest so a malicious tag re-push can't
+      # swap in a different image. The GH App token flows through this
+      # container during checkout, so a swap would be a credential leak.
+      # Bump alongside the workflow when picking up new base-OS patches.
+      image: ghcr.io/dtcooper/raspberrypi-os:bookworm@sha256:19c44df0fedce744262225033ccc1c4e7b1d325495db97335ed863834415b48e
 
     steps:
       - name: Install OS dependencies
@@ -150,9 +223,11 @@ jobs:
           ref: ${{ inputs.ref_to_build }}
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 200
+          persist-credentials: false
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           path: ./tmp-automation-release-scripts
+          persist-credentials: false
 
       # The workspace is owned by a different uid than the user our shell
       # runs as inside the container, so git refuses to operate on it.
@@ -172,17 +247,21 @@ jobs:
       - run: npm install -g npm@10.2.5
 
       - name: Prepare release signing
+        env:
+          PUB:  ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}
+          PRIV: ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }}
         run: |
-          echo ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }} >> public.key
-          echo ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }} >> private.key
+          printf '%s' "$PUB"  > public.key
+          printf '%s' "$PRIV" > private.key
+          chmod 600 private.key
 
       - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
 
       # github.workspace expands to the host path, which doesn't exist inside
       # the container — use $GITHUB_WORKSPACE, which Actions sets to the
       # in-container mount path.
-      - name: Overwrite updates server, public key, etc.
-        run: PUBLIC_KEY="${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}" SIGNAL_DIR="$GITHUB_WORKSPACE" node ./tmp-automation-release-scripts/patch-files.mjs
+      - name: Patch package.json and pnpm-workspace.yaml
+        run: SIGNAL_DIR="$GITHUB_WORKSPACE" node ./tmp-automation-release-scripts/patch-files.mjs
 
       - working-directory: ./sticker-creator
         run: |
@@ -191,6 +270,14 @@ jobs:
 
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm run generate
+      # `pnpm run generate` must not touch tracked files. The exclusions
+      # below are the files we deliberately rewrite earlier in this job.
+      - name: Verify generate produced no unexpected changes
+        run: |
+          git diff --exit-code -- \
+            ':!package.json' \
+            ':!pnpm-workspace.yaml' \
+            ':!pnpm-lock.yaml'
       - run: pnpm run prepare-beta-build
       - name: Create bundle
         run: pnpm run build:esbuild:prod
@@ -199,6 +286,27 @@ jobs:
         env:
           USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
+
+      # Pull the same Signal-Message-Backup-Tests SHA upstream's CI uses for
+      # this Signal version. Cloned before the chown below so test-electron
+      # can read it as testuser.
+      - name: Resolve backup-integration-tests SHA from Signal's CI
+        id: backup-sha
+        run: |
+          SHA=$(grep -A2 'Signal-Message-Backup-Tests' .github/workflows/ci.yml | grep -oE '[a-f0-9]{40}' | head -1)
+          if [ -z "$SHA" ]; then
+            echo "Could not find Signal-Message-Backup-Tests ref in upstream CI" >&2
+            exit 1
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Using Signal-Message-Backup-Tests @ $SHA"
+      - name: Clone backup integration tests
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: 'signalapp/Signal-Message-Backup-Tests'
+          ref: ${{ steps.backup-sha.outputs.sha }}
+          path: 'backup-integration-tests'
+          persist-credentials: false
 
       # Filesystem-permission tests assume non-root semantics (root bypasses
       # the permission bits they rely on). Build as root so apt-get / system
@@ -215,14 +323,28 @@ jobs:
       - run: runuser -u testuser -- xvfb-run --auto-servernum pnpm run test-electron
         env:
           ELECTRON_DISABLE_SANDBOX: true
+          BACKUP_INTEGRATION_DIR: 'backup-integration-tests/test-cases'
+      # `pnpm run test-release` is skipped on Linux arm64: upstream's
+      # scripts/test-release.mjs hardcodes `linux-unpacked` and doesn't yet
+      # know about `linux-arm64-unpacked`. Re-enable once
+      # https://github.com/signalapp/Signal-Desktop/pull/7202 (or equivalent)
+      # is merged.
 
   release:
     needs: [linux, test-raspberrypi]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: inputs.release == 'true'
+    permissions:
+      # The release itself is created with the GH App token. `contents: read`
+      # is enough for download-artifact; `attestations: read` lets
+      # `gh attestation verify` look up the SLSA attestation produced by the
+      # linux job.
+      contents: read
+      attestations: read
 
     outputs:
-      release_url: ${{ steps.release-url.outputs.html_url }}
+      release_url: ${{ steps.create-release.outputs.html_url }}
       signal_version: ${{ steps.signal-version.outputs.version }}
 
     steps:
@@ -242,28 +364,53 @@ jobs:
         echo "SIGNAL_VERSION=${SIGNAL_VERSION}" >> $GITHUB_ENV
         echo "SIGNAL_TAG=${SIGNAL_TAG}" >> $GITHUB_ENV
         echo "version=${SIGNAL_VERSION}" >> $GITHUB_OUTPUT
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
         name: release-binaries
         path: binaries
-    - uses: ncipollo/release-action@v1
-      id: release-url
-      with:
-        owner: dennisameling
-        repo: Signal-Desktop
-        makeLatest: true
-        artifacts: 'binaries/*'
-        tag: ${{ inputs.ref_to_build }}
-        body: |
-          This is the v${{ env.SIGNAL_VERSION }} release.
+    # Verify each downloaded binary against the SLSA attestation generated
+    # in the linux job. Mismatch = the artifact was tampered with between
+    # upload and download, and we refuse to publish.
+    - name: Verify build provenance
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        shopt -s nullglob
+        files=(binaries/*)
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "No artifacts to verify" >&2
+          exit 1
+        fi
+        for f in "${files[@]}"; do
+          echo "Verifying $f"
+          gh attestation verify "$f" --repo "${{ github.repository }}"
+        done
+    - name: Create GitHub release
+      id: create-release
+      env:
+        GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        SIGNAL_VERSION: ${{ steps.signal-version.outputs.version }}
+      run: |
+        cat > release-notes.md <<'EOF'
+        This is the v__SIGNAL_VERSION__ release.
 
-          ## Linux arm64
+        ## Linux arm64
 
-          This release contains a `.deb` file for Linux users. Note that auto-updates are **not** supported on this platform.
+        This release contains a `.deb` file for Linux users. Note that auto-updates are **not** supported on this platform.
 
-          ## Windows arm64
+        ## Build provenance
 
-          > [!WARNING]  
-          > Official support for Windows arm64 [was added in Signal 7.34.0](https://github.com/signalapp/Signal-Desktop/issues/3745#issuecomment-2489355026), meaning that I will no longer be offering builds for Signal Unofficial. The last release with Windows arm64 support here is 7.35.0. **You can migrate to the official client while keeping all your chat history and data**. Instructions are [here](https://github.com/dennisameling/Signal-Desktop/issues/24#issuecomment-2490816224).
-        name: v${{ env.SIGNAL_VERSION }}
-        token: ${{ steps.generate_token.outputs.token }}
+        All binaries attached to this release are built with [SLSA build provenance attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) generated by GitHub Actions. You can cryptographically verify that a binary was produced by this workflow before running it:
+
+        ```sh
+        gh attestation verify <downloaded-file> --repo dennisameling/signal-desktop-automation
+        ```
+        EOF
+        sed -i "s/__SIGNAL_VERSION__/${SIGNAL_VERSION}/g" release-notes.md
+        URL=$(gh release create "${SIGNAL_TAG}" \
+          binaries/* \
+          --repo dennisameling/Signal-Desktop \
+          --title "v${SIGNAL_VERSION}" \
+          --notes-file release-notes.md \
+          --latest)
+        echo "html_url=${URL}" >> "$GITHUB_OUTPUT"
