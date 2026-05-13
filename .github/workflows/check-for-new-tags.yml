@@ -5,12 +5,18 @@ on:
     - cron: '22 1,3,5,8,18,23 * * *'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   check-new-tags:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # Required for createWorkflowDispatch on this same repo.
+      actions: write
 
     steps:
-    - uses: actions/github-script@v6
+    - uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
       name: Check for new releases in signalapp/Signal-Desktop
       with:
         script: |
