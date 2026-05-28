@@ -39,10 +39,14 @@ jobs:
         id: generate_token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         with:
-          app-id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
+          client-id: ${{ secrets.GH_APP_DENNIS_CLIENT_ID }}
           private-key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
           owner: dennisameling
           repositories: Signal-Desktop
+          # Token is used only to push the upstream tag to
+          # dennisameling/Signal-Desktop. Pinning the permission strips any
+          # other scope the App may grow in the future.
+          permission-contents: write
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: 'signalapp/signal-desktop'
@@ -213,10 +217,14 @@ jobs:
         id: generate_token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         with:
-          app-id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
+          client-id: ${{ secrets.GH_APP_DENNIS_CLIENT_ID }}
           private-key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
           owner: dennisameling
           repositories: Signal-Desktop
+          # This job never writes to the repo — the token only authenticates
+          # the upstream public-repo checkout. Restrict to read so a
+          # compromised third-party container can't escalate.
+          permission-contents: read
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: 'signalapp/signal-desktop'
@@ -352,10 +360,13 @@ jobs:
       id: generate_token
       uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
       with:
-        app-id: ${{ secrets.GH_APP_DENNIS_APP_ID }}
+        client-id: ${{ secrets.GH_APP_DENNIS_CLIENT_ID }}
         private-key: ${{ secrets.GH_APP_DENNIS_PRIVATE_KEY }}
         owner: dennisameling
         repositories: Signal-Desktop
+        # `gh release create` and asset upload both fall under contents:write.
+        # No other scope is needed.
+        permission-contents: write
     # Turns v6.1.0 into 6.1.0
     - name: Get version from tag
       id: signal-version
