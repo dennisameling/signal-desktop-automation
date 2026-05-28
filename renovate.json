@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "schedule:monthly",
+    "helpers:pinGitHubActionDigests",
+    "group:allNonMajor"
+  ],
+  "reviewers": ["dennisameling"],
+  "minimumReleaseAge": "7 days"
+}
