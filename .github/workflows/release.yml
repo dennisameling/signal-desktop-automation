@@ -78,23 +78,12 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
       - run: sudo apt-get update && sudo apt-get install xvfb libpulse0
-      - run: npm install -g npm@10.2.5
+      - run: npm install -g node-gyp
       - uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.310.0
         with:
           ruby-version: '4.0.5'
       - name: Install FPM (for packaging)
         run: gem install fpm
-      # Write keys via env vars and printf — `echo ${{ secrets.X }}` would
-      # interpolate the secret into the shell command (injection risk) and
-      # `echo`'s word-splitting would mangle multi-line PEMs.
-      - name: Prepare release signing
-        env:
-          PUB:  ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}
-          PRIV: ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }}
-        run: |
-          printf '%s' "$PUB"  > public.key
-          printf '%s' "$PRIV" > private.key
-          chmod 600 private.key
 
       # Copy files to the patches/ directory where all of Signal's per-dependency patches live
       # NOTE: after creating a patch, make sure to add it to patch-files.mjs too!
@@ -252,16 +241,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
-      - run: npm install -g npm@10.2.5
-
-      - name: Prepare release signing
-        env:
-          PUB:  ${{ secrets.SIGN_RELEASE_PUBLIC_KEY }}
-          PRIV: ${{ secrets.SIGN_RELEASE_PRIVATE_KEY }}
-        run: |
-          printf '%s' "$PUB"  > public.key
-          printf '%s' "$PRIV" > private.key
-          chmod 600 private.key
+      - run: npm install -g node-gyp
 
       - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
 
