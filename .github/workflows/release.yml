@@ -129,7 +129,9 @@ jobs:
       #  env:
       #    ARTIFACTS_DIR: artifacts/linux
       - name: Build with packaging .deb file
-        run: pnpm run build:release --publish=never
+        # For some reason electron-builder tries to build as x64. Adding
+        # --arm64 correctly forces the build to be arm64.
+        run: pnpm run build:release --arm64 --publish=never
         env:
           USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
@@ -282,7 +284,9 @@ jobs:
       - name: Create bundle
         run: pnpm run build:esbuild:prod
       - name: Build with packaging .deb file
-        run: pnpm run build:release --publish=never
+        # For some reason electron-builder tries to build as x64. Adding
+        # --arm64 correctly forces the build to be arm64.
+        run: pnpm run build:release --arm64 --publish=never
         env:
           USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
