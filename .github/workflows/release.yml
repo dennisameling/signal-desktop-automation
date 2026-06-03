@@ -69,14 +69,14 @@ jobs:
           persist-credentials: false
 
       # Install NodeJS and prepare dependencies
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
       - name: Setup node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
       - run: sudo apt-get update && sudo apt-get install xvfb libpulse0
       - run: npm install -g node-gyp
       - uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.310.0
@@ -233,14 +233,15 @@ jobs:
       - name: Trust workspace dirs in git
         run: git config --global --add safe.directory '*'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
       - name: Setup node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
+      
       - run: npm install -g node-gyp
 
       - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
