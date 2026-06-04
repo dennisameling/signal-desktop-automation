@@ -97,6 +97,10 @@ jobs:
       # entry to patchedDependencies (in pnpm-workspace.yaml), which causes
       # pnpm to regenerate the lockfile.
       - run: pnpm install --no-frozen-lockfile
+      # Upstream's build.linux.target defaults to x64. Rewrite it to arm64 via
+      # Signal's own script (replaces the manual arch override we used to do in
+      # patch-files.mjs). Must run after install since the script needs lodash.
+      - run: pnpm run prepare-linux-build deb arm64
       - run: pnpm run generate
       # `pnpm run generate` must not touch tracked files. The exclusions
       # below are the files we deliberately rewrite earlier in this job.
@@ -114,6 +118,12 @@ jobs:
       #  run: xvfb-run --auto-servernum pnpm run build:preload-cache
       #  env:
       #    ARTIFACTS_DIR: artifacts/linux
+      # Fail fast if build.linux.target isn't arm64-only (e.g. upstream's
+      # prepare-linux-build changes shape): otherwise we'd silently ship x64.
+      - name: Verify build.linux.target is arm64
+        run: |
+          jq -e '[.build.linux.target[]?.arch] | flatten | length > 0 and all(. == "arm64")' package.json > /dev/null \
+            || { echo "::error::build.linux.target is not arm64-only in package.json"; jq '.build.linux.target' package.json; exit 1; }
       - name: Build with packaging .deb file
         run: pnpm run build:release --publish=never
         env:
@@ -182,7 +192,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y \
-            git curl ca-certificates \
+            git curl ca-certificates jq \
             build-essential python3 \
             xvfb libpulse0 \
             libnss3 libgbm1 libasound2 libsecret-1-0 \
@@ -246,6 +256,10 @@ jobs:
           pnpm run build
 
       - run: pnpm install --no-frozen-lockfile
+      # Upstream's build.linux.target defaults to x64. Rewrite it to arm64 via
+      # Signal's own script (replaces the manual arch override we used to do in
+      # patch-files.mjs). Must run after install since the script needs lodash.
+      - run: pnpm run prepare-linux-build deb arm64
       - run: pnpm run generate
       # `pnpm run generate` must not touch tracked files. The exclusions
       # below are the files we deliberately rewrite earlier in this job.
@@ -258,6 +272,12 @@ jobs:
       - run: pnpm run prepare-beta-build
       - name: Create bundle
         run: pnpm run build:esbuild:prod
+      # Fail fast if build.linux.target isn't arm64-only (e.g. upstream's
+      # prepare-linux-build changes shape): otherwise we'd silently ship x64.
+      - name: Verify build.linux.target is arm64
+        run: |
+          jq -e '[.build.linux.target[]?.arch] | flatten | length > 0 and all(. == "arm64")' package.json > /dev/null \
+            || { echo "::error::build.linux.target is not arm64-only in package.json"; jq '.build.linux.target' package.json; exit 1; }
       - name: Build with packaging .deb file
         run: pnpm run build:release --publish=never
         env:

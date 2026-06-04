@@ -33,24 +33,6 @@ const overwritePackageJson = () => {
     parsedConfig.desktopName = 'signal.desktop.unofficial'
     parsedConfig.build.appId = 'com.dennisameling.signal-desktop'
 
-    // Signal's build.linux.target hardcodes arch=x64. Force arm64 here so the
-    // value is correct everywhere electron-builder consumes it (CLI args alone
-    // can be overridden by per-target arch entries in the config).
-    const linuxTargets = parsedConfig.build?.linux?.target
-    if (!Array.isArray(linuxTargets) || linuxTargets.length === 0) {
-        throw new Error(`build.linux.target is missing or not an array in ${filePath}. Update this script.`)
-    }
-    let rewroteArch = false
-    for (const t of linuxTargets) {
-        if (t && typeof t === 'object' && 'arch' in t) {
-            t.arch = 'arm64'
-            rewroteArch = true
-        }
-    }
-    if (!rewroteArch) {
-        throw new Error(`build.linux.target entries no longer carry an arch field. Update this script.`)
-    }
-
     const signalPatches = parsedConfig.pnpm?.patchedDependencies ?? {}
     if (parsedConfig.pnpm?.patchedDependencies) {
         delete parsedConfig.pnpm.patchedDependencies
