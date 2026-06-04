@@ -161,6 +161,13 @@ jobs:
         env:
           ELECTRON_DISABLE_SANDBOX: true
           BACKUP_INTEGRATION_DIR: 'backup-integration-tests/test-cases'
+          # Mirror upstream CI's test-electron environment.
+          LANG: en_US
+          LANGUAGE: en_US
+          ARTIFACTS_DIR: artifacts/linux
+          # GitHub's arm64 runners have 4 cores (upstream uses 8 on its
+          # 8-core x64 runner).
+          WORKER_COUNT: 4
       # `pnpm run test-release` is skipped on Linux arm64: upstream's
       # scripts/test-release.mjs hardcodes `linux-unpacked` and doesn't yet
       # know about `linux-arm64-unpacked`. Re-enable once
@@ -170,6 +177,14 @@ jobs:
         with:
           name: release-binaries
           path: release/signal-desktop-unofficial*
+      # Capture test screenshots/logs (written to ARTIFACTS_DIR) when a build
+      # or test step fails, like upstream's CI does.
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: linux-failure-artifacts
+          path: artifacts
 
   # Smoke-build inside a Raspberry Pi OS userland to catch breakage in the
   # arm64 Pi-specific fs-extra patch. Runs on the same ubuntu-22.04-arm host
@@ -320,11 +335,26 @@ jobs:
         env:
           ELECTRON_DISABLE_SANDBOX: true
           BACKUP_INTEGRATION_DIR: 'backup-integration-tests/test-cases'
+          # Mirror upstream CI's test-electron environment.
+          LANG: en_US
+          LANGUAGE: en_US
+          ARTIFACTS_DIR: artifacts/linux
+          # GitHub's arm64 runners have 4 cores (upstream uses 8 on its
+          # 8-core x64 runner).
+          WORKER_COUNT: 4
       # `pnpm run test-release` is skipped on Linux arm64: upstream's
       # scripts/test-release.mjs hardcodes `linux-unpacked` and doesn't yet
       # know about `linux-arm64-unpacked`. Re-enable once
       # https://github.com/signalapp/Signal-Desktop/pull/7202 (or equivalent)
       # is merged.
+      # Capture test screenshots/logs (written to ARTIFACTS_DIR) when a build
+      # or test step fails, like upstream's CI does.
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: raspberrypi-failure-artifacts
+          path: artifacts
 
   release:
     needs: [linux, test-raspberrypi]
