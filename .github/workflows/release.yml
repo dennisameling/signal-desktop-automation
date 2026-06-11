@@ -81,6 +81,11 @@ jobs:
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
       - run: sudo apt-get update && sudo apt-get install xvfb libpulse0
       - run: npm install -g node-gyp
+      - uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.310.0
+        with:
+          ruby-version: '4.0.5'
+      - name: Install FPM (for packaging)
+        run: gem install fpm
 
       # Copy files to the patches/ directory where all of Signal's per-dependency patches live
       # NOTE: after creating a patch, make sure to add it to patch-files.mjs too!
@@ -131,6 +136,7 @@ jobs:
       - name: Build with packaging .deb file
         run: pnpm run build:release --publish=never
         env:
+          USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
       # SLSA build provenance attestation. The release job re-verifies this
       # against the downloaded artifact so anything that tampered with the
@@ -213,6 +219,7 @@ jobs:
           apt-get install -y \
             git curl ca-certificates jq \
             build-essential python3 \
+            ruby ruby-dev \
             xvfb libpulse0 \
             libnss3 libgbm1 libasound2 libsecret-1-0 \
             libatk1.0-0 libatk-bridge2.0-0 libcups2 \
@@ -220,6 +227,7 @@ jobs:
             libgtk-3-0 libpango-1.0-0 libpangocairo-1.0-0 libcairo2 \
             libgdk-pixbuf-2.0-0 libdrm2 libxshmfence1 libxkbcommon0 libxss1 \
             fuse libfuse2
+          gem install fpm
 
       - name: Get GH token
         id: generate_token
@@ -300,6 +308,7 @@ jobs:
       - name: Build with packaging .deb file
         run: pnpm run build:release --publish=never
         env:
+          USE_SYSTEM_FPM: 'true'
           DISABLE_INSPECT_FUSE: 'on'
 
       # Pull the same Signal-Message-Backup-Tests SHA upstream's CI uses for
