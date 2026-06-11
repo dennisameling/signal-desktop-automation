@@ -44,9 +44,13 @@ jobs:
           owner: dennisameling
           repositories: Signal-Desktop
           # Token is used only to push the upstream tag to
-          # dennisameling/Signal-Desktop. Pinning the permission strips any
+          # dennisameling/Signal-Desktop. Pinning the permissions strips any
           # other scope the App may grow in the future.
           permission-contents: write
+          # The upstream tag's HEAD includes .github/workflows/*, and GitHub
+          # rejects App pushes that create or update workflow files unless the
+          # token also carries the `workflows` permission.
+          permission-workflows: write
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: 'signalapp/signal-desktop'
