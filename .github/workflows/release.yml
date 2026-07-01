@@ -51,7 +51,7 @@ jobs:
           # rejects App pushes that create or update workflow files unless the
           # token also carries the `workflows` permission.
           permission-workflows: write
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           repository: 'signalapp/signal-desktop'
           ref: ${{ inputs.ref_to_build }}
@@ -67,7 +67,7 @@ jobs:
           git push --force \
             "https://x-access-token:${GH_TOKEN}@github.com/dennisameling/Signal-Desktop.git" \
             "HEAD:refs/tags/${SIGNAL_TAG}"
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           path: ./tmp-automation-release-scripts
           persist-credentials: false
@@ -157,7 +157,7 @@ jobs:
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "Using Signal-Message-Backup-Tests @ $SHA"
       - name: Clone backup integration tests
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           repository: 'signalapp/Signal-Message-Backup-Tests'
           ref: ${{ steps.backup-sha.outputs.sha }}
@@ -235,14 +235,14 @@ jobs:
           # the upstream public-repo checkout. Restrict to read so a
           # compromised third-party container can't escalate.
           permission-contents: read
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           repository: 'signalapp/signal-desktop'
           ref: ${{ inputs.ref_to_build }}
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 200
           persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           path: ./tmp-automation-release-scripts
           persist-credentials: false
@@ -320,7 +320,7 @@ jobs:
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "Using Signal-Message-Backup-Tests @ $SHA"
       - name: Clone backup integration tests
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           repository: 'signalapp/Signal-Message-Backup-Tests'
           ref: ${{ steps.backup-sha.outputs.sha }}
