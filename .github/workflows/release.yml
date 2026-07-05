@@ -206,7 +206,7 @@ jobs:
       # swap in a different image. The GH App token flows through this
       # container during checkout, so a swap would be a credential leak.
       # Bump alongside the workflow when picking up new base-OS patches.
-      image: ghcr.io/dtcooper/raspberrypi-os:bookworm@sha256:8ebdebb4eca995094c3137fb848be95920eaff8dd1b73560ee56c314138163e6
+      image: ghcr.io/dtcooper/raspberrypi-os:bookworm@sha256:72e5293fbbf0af90d98f9ddb1ed73f0ba97cf95e2b68c9148899e6e83aa55bb0
 
     steps:
       - name: Install OS dependencies
