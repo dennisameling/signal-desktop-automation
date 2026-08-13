@@ -174,16 +174,15 @@ jobs:
           # GitHub's arm64 runners have 4 cores (upstream uses 8 on its
           # 8-core x64 runner).
           WORKER_COUNT: 4
-      # Smoke-launches the packaged app. Upstream's scripts/test-release.mjs
-      # learned about `linux-arm64-unpacked` in
-      # https://github.com/signalapp/Signal-Desktop/pull/7202, so this now
-      # works on arm64. Unlike upstream we disable the Electron sandbox, same
-      # as the test steps above: the unpacked chrome-sandbox isn't setuid root
-      # until the .deb is installed.
-      - run: xvfb-run --auto-servernum pnpm run test-release
-        env:
-          NODE_ENV: production
-          ELECTRON_DISABLE_SANDBOX: true
+      # `pnpm run test-release` stays off, but no longer for lack of arm64
+      # support upstream — scripts/test-release.mjs handles
+      # `linux-arm64-unpacked` since signalapp/Signal-Desktop#7202. It derives
+      # the executable path from package.json `name`, which patch-files.mjs
+      # rewrites to signal-desktop-unofficial, while build.linux.executableName
+      # stays upstream's `signal-desktop`, so it looks for a binary that isn't
+      # there (run 31731055629). Enabling it means also rewriting
+      # build.linux.executableName, which renames the command existing users
+      # launch.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-binaries
@@ -355,11 +354,8 @@ jobs:
           # GitHub's arm64 runners have 4 cores (upstream uses 8 on its
           # 8-core x64 runner).
           WORKER_COUNT: 4
-      # See the note on this step in the linux job above.
-      - run: runuser -u testuser -- xvfb-run --auto-servernum pnpm run test-release
-        env:
-          NODE_ENV: production
-          ELECTRON_DISABLE_SANDBOX: true
+      # `pnpm run test-release` is off here too — see the note in the linux
+      # job above.
       # Capture test screenshots/logs (written to ARTIFACTS_DIR) when a build
       # or test step fails, like upstream's CI does.
       - name: Upload artifacts on failure
