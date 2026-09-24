@@ -82,16 +82,11 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install xvfb libpulse0
       - run: npm install -g node-gyp
 
-      # Copy files to the patches/ directory where all of Signal's per-dependency patches live
-      # NOTE: after creating a patch, make sure to add it to patch-files.mjs too!
-      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
-
       - name: Patch package.json and pnpm-workspace.yaml
         run: SIGNAL_DIR="${{ github.workspace }}" node ./tmp-automation-release-scripts/patch-files.mjs
 
       # Build Sticker Creator. `pnpm install` here resolves to the workspace
-      # root, so it hits the same patchedDependencies/lockfile mismatch as the
-      # main install below and also needs --no-frozen-lockfile.
+      # root, so it needs --no-frozen-lockfile just like the main install below.
       - working-directory: ./sticker-creator
         run: |
           pnpm install --no-frozen-lockfile
@@ -99,9 +94,8 @@ jobs:
       
       # The steps below pretty much exactly mimic the official build
       # https://github.com/signalapp/Signal-Desktop/blob/main/.github/workflows/ci.yml
-      # We use --no-frozen-lockfile here because patch-files.mjs adds an
-      # entry to patchedDependencies (in pnpm-workspace.yaml), which causes
-      # pnpm to regenerate the lockfile.
+      # We use --no-frozen-lockfile here because patch-files.mjs edits
+      # pnpm-workspace.yaml, which causes pnpm to regenerate the lockfile.
       - run: pnpm install --no-frozen-lockfile
       # Upstream's build.linux.target defaults to x64. Rewrite it to arm64 via
       # Signal's own script (replaces the manual arch override we used to do in
@@ -196,10 +190,9 @@ jobs:
           name: linux-failure-artifacts
           path: artifacts
 
-  # Smoke-build inside a Raspberry Pi OS userland to catch breakage in the
-  # arm64 Pi-specific fs-extra patch. Runs on the same ubuntu-22.04-arm host
-  # kernel, so it does not reproduce hardware-specific Pi bugs — it verifies
-  # the patch applies and the build pipeline completes against Pi OS libs.
+  # Smoke-build inside a Raspberry Pi OS userland. Runs on the same
+  # ubuntu-22.04-arm host kernel, so it does not reproduce hardware-specific
+  # Pi bugs — it verifies the build pipeline completes against Pi OS libs.
   test-raspberrypi:
     runs-on: ubuntu-22.04-arm
     timeout-minutes: 20
@@ -267,8 +260,6 @@ jobs:
       
       - run: npm install -g node-gyp
 
-      - run: cp -v ./tmp-automation-release-scripts/patches/* patches/
-
       # github.workspace expands to the host path, which doesn't exist inside
       # the container — use $GITHUB_WORKSPACE, which Actions sets to the
       # in-container mount path.
@@ -276,7 +267,7 @@ jobs:
         run: SIGNAL_DIR="$GITHUB_WORKSPACE" node ./tmp-automation-release-scripts/patch-files.mjs
 
       # Resolves to the workspace root, so --no-frozen-lockfile is needed here
-      # too (patch-files.mjs changed patchedDependencies).
+      # too (patch-files.mjs changed pnpm-workspace.yaml).
       - working-directory: ./sticker-creator
         run: |
           pnpm install --no-frozen-lockfile

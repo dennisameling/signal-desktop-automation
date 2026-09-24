@@ -1,4 +1,4 @@
-import {existsSync, readFileSync, writeFileSync} from 'node:fs'
+import {readFileSync, writeFileSync} from 'node:fs'
 import path from 'node:path'
 
 if (!process.env.SIGNAL_DIR) {
@@ -7,14 +7,6 @@ if (!process.env.SIGNAL_DIR) {
 
 const signalRoot = process.env.SIGNAL_DIR;
 console.log(`Signal root dir is ${signalRoot}`)
-
-// Patches we add on top of Signal's own. Signal declares its patches in
-// pnpm-workspace.yaml under `patchedDependencies`; we merge ours into that
-// existing block (see addPatchesToWorkspaceYaml).
-const EXTRA_PATCHES = {
-    // arm64 Linux on Raspberry Pi devices.
-    'fs-extra@11.3.4': 'patches/fs-extra+11.3.4.patch',
-}
 
 // npm deprecations are retroactive: a version that was fine when Signal tagged
 // a release can be deprecated afterwards. Signal's .pnpmfile.mjs then fails
@@ -49,61 +41,6 @@ const overwritePackageJson = () => {
     parsedConfig.build.appId = 'com.dennisameling.signal-desktop'
 
     writeFileSync(filePath, JSON.stringify(parsedConfig, null, 2), {encoding: 'utf-8'})
-}
-
-// 'fs-extra@11.3.4' -> 'fs-extra'; '@scope/pkg@1.2.3' -> '@scope/pkg'.
-const packageName = (key) => {
-    const at = key.lastIndexOf('@')
-    return at > 0 ? key.slice(0, at) : key
-}
-
-// Collect the package names already declared in the patchedDependencies block:
-// every indented entry under the header, up to the next top-level key.
-const existingPatchedPackages = (yaml, blockStart) => {
-    const packages = new Set()
-    for (const line of yaml.slice(blockStart).split('\n')) {
-        if (line.trim() === '') continue
-        if (!/^\s/.test(line)) break // first unindented line = next top-level key
-        const entry = line.match(/^\s+'?([^'":#\s][^'":]*?)'?[ \t]*:/)
-        if (entry) packages.add(packageName(entry[1].trim()))
-    }
-    return packages
-}
-
-// pnpm v10 reads `patchedDependencies` from pnpm-workspace.yaml, where Signal
-// now declares all of its own patches. We merge ours into that existing block
-// rather than maintaining a separate copy of Signal's list. We bail loudly if
-// the block is missing (upstream moved it) or already patches one of our
-// packages (upstream started patching it too) instead of silently producing a
-// broken file.
-const addPatchesToWorkspaceYaml = () => {
-    const filePath = path.join(signalRoot, 'pnpm-workspace.yaml')
-    if (!existsSync(filePath)) {
-        throw new Error(`Expected ${filePath} to exist. Has upstream's layout changed?`)
-    }
-    const original = readFileSync(filePath, {encoding: 'utf-8'})
-
-    const header = original.match(/^patchedDependencies[ \t]*:[ \t]*$/m)
-    if (!header) {
-        throw new Error(`pnpm-workspace.yaml no longer declares patchedDependencies. Upstream layout changed — update this script.`)
-    }
-    const blockStart = header.index + header[0].length
-
-    const alreadyPatched = existingPatchedPackages(original, blockStart)
-    for (const key of Object.keys(EXTRA_PATCHES)) {
-        if (alreadyPatched.has(packageName(key))) {
-            throw new Error(`pnpm-workspace.yaml already patches ${packageName(key)}. Update EXTRA_PATCHES to merge with Signal's patch instead of duplicating it.`)
-        }
-    }
-
-    const yamlEntries = Object.entries(EXTRA_PATCHES)
-        .map(([key, value]) => `  '${key}': '${value}'`)
-        .join('\n')
-    const merged = `${original.slice(0, blockStart)}\n${yamlEntries}${original.slice(blockStart)}`
-
-    writeFileSync(filePath, merged, {encoding: 'utf-8'})
-    console.log(`✅ Merged ${Object.keys(EXTRA_PATCHES).length} patch entr${Object.keys(EXTRA_PATCHES).length === 1 ? 'y' : 'ies'} into pnpm-workspace.yaml`)
-    console.log(JSON.stringify(EXTRA_PATCHES, null, 2))
 }
 
 // Where a top-level YAML block ends: at the first line that isn't indented.
@@ -153,7 +90,6 @@ const allowDeprecatedVersions = () => {
 
 const run = () => {
     overwritePackageJson()
-    addPatchesToWorkspaceYaml()
     allowDeprecatedVersions()
 }
 
